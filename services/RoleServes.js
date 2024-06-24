@@ -6,7 +6,16 @@ const addRole = async (roleData) => {
     await newRole.save();
     return;
   } catch (error) {
-    return error;
+    if (error) throw error;
+  }
+};
+
+const getAllRoles = async () => {
+  try {
+    const roles = await Role.find();
+    return roles;
+  } catch (error) {
+    if (error) throw error;
   }
 };
 
@@ -15,11 +24,31 @@ const getRole = async (roleName) => {
     const role = await Role.findOne({ roleName });
     return role;
   } catch (error) {
-    return error;
+    if (error) throw error;
   }
 };
 
+const updateRole = async (id, roleData) => {
+  try {
+    const role = await Role.findByIdAndUpdate(id, { roleData });
+    return role;
+  } catch (error) {
+    if (error) throw error;
+  }
+};
+
+const deleteRole = async (data) => {
+  try {
+    await Role.findOneAndDelete(data);
+    return;
+  } catch (error) {
+    if (error) throw error;
+  }
+};
 export default {
   addRole,
-  getRole
+  getAllRoles,
+  getRole,
+  updateRole,
+  deleteRole,
 };

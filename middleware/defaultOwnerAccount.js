@@ -36,7 +36,7 @@ const createOwnerAccount = async (req, res, next) => {
       email: envConfig.Email.email,
       password: hashedPassword,
       default: true,
-      role: [ownerRole._id],
+      role: ownerRole._id,
     };
     // save owner
     const error = await ownerService.addOwner(ownerAccountData);

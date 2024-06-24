@@ -5,7 +5,7 @@ const employeeSchema = new Schema({
   fullName: { type: String, required: true },
   email: { type: String, unique: true, required: true },
   password: { type: String, required: true },
-  role: [{ type: Schema.Types.ObjectId, ref: "Role", required: true }],
+  role: { type: Schema.Types.ObjectId, ref: "Role", required: true },
 });
 
 const Employee = model("Employee", employeeSchema);

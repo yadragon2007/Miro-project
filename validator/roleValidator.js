@@ -11,29 +11,83 @@ const addRole = [
       const role = await Role.findOne({ roleName });
       if (role)
         return Promise.reject(
-          new Error(`there is no room with this name (${roleName})`)
+          new Error(`there is a room with this name (${roleName})`)
         );
     }),
+  body("description").isString().withMessage("roleName must be String"),
   body("permissions").isArray().withMessage("permissions must be array"),
   body("permissions.*")
     .notEmpty()
     .withMessage("permissions indexes must not be empty")
-    .isObject()
-    .withMessage("permissions indexes must be object"),
-  body("permissions.*.url")
-    .notEmpty()
-    .withMessage("permissions.*.url must not be empty")
     .isString()
-    .withMessage("permissions.*.url must be String"),
-  body("permissions.*.method")
-    .notEmpty()
-    .withMessage("permissions.*.method must not be empty")
-    .isString()
-    .withMessage("permissions.*.method must be String")
-    .isIn(["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"])
-    .withMessage(
-      'permissions.*.method must be one of them ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]'
-    ),
+    .withMessage("permissions indexes must be string"),
 ];
 
-export default { addRole };
+const updateRole = [
+  body("roleId")
+    .notEmpty()
+    .withMessage("roleId must not be empty")
+    .isString()
+    .withMessage("roleId must be string")
+    .isMongoId()
+    .withMessage("roleId must be valid mongoId")
+    .custom(async (id) => {
+      const role = await Role.findById(id);
+      if (!role)
+        return Promise.reject(
+          new Error(`there is no role with this id (${id})`)
+        );
+    }),
+  body("roleName")
+    .notEmpty()
+    .withMessage("roleName must not be empty")
+    .isString()
+    .withMessage("roleName must be String")
+    .custom(async (roleName, { req }) => {
+      const role = await Role.findOne({ roleName });
+      if (role._id != req.body.roleId)
+        return Promise.reject(
+          new Error(`there is a room with this name (${roleName})`)
+        );
+    }),
+  body("description").isString().withMessage("roleName must be String"),
+  body("permissions").isArray().withMessage("permissions must be array"),
+  body("permissions.*")
+    .notEmpty()
+    .withMessage("permissions indexes must not be empty")
+    .isString()
+    .withMessage("permissions indexes must be string"),
+];
+
+const deleteRole = [
+  body("_id")
+    .optional()
+    .notEmpty()
+    .withMessage("roleId must not be empty")
+    .isString()
+    .withMessage("roleId must be string")
+    .isMongoId()
+    .withMessage("roleId must be valid mongoId")
+    .custom(async (id) => {
+      const role = await Role.findById(id);
+      if (!role)
+        return Promise.reject(
+          new Error(`there is no role with this id (${id})`)
+        );
+    }),
+  body("roleName")
+    .optional()
+    .notEmpty()
+    .withMessage("roleName must not be empty")
+    .isString()
+    .withMessage("roleName must be String")
+    .custom(async (roleName, { req }) => {
+      const role = await Role.findOne({ roleName });
+      if (!role)
+        return Promise.reject(
+          new Error(`there is a room with this name (${roleName})`)
+        );
+    }),
+];
+
+export default { addRole, updateRole, deleteRole };

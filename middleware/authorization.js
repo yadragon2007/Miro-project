@@ -1,12 +1,18 @@
 import Accounts from "../models/accountsModel.js";
 import jwt from "jsonwebtoken";
 import envConfig from "../config/envConfig.js";
-
+import Employee from "../models/employeeModel.js";
+import Owner from "../models/ownersModel.js";
+const APIusers = {
+  Accounts,
+  Employee,
+  Owner,
+};
 const AdminAuthorization = async (req, res, next) => {
   const { authorization } = req.headers;
 
   if (!authorization || !authorization.startsWith("Bearer")) {
-    return res.status(401).json({
+    return res.status(403).json({
       type: "authorization",
       code: "00",
       message: "Missing authorization header",
@@ -16,21 +22,24 @@ const AdminAuthorization = async (req, res, next) => {
       const token = authorization.split(" ")[1]; //retrieve the token part only
       // verify Token
       const decoded = jwt.verify(token, envConfig.JWT.secret);
-      // check if user is exists
-      const user = await Accounts.findById(decoded.id);
-      if (!user)
-        return res.status(401).send({
+      // check admin title
+      if (decoded.title !== "Owner" && decoded.title !== "Employee")
+        return res.status(403).send({
           type: "authorization",
           code: "01",
+          message: "user not authorized",
+        });
+      // get admin title
+      const title = decoded.title;
+      // check if user is exists
+      const user = await APIusers[title].findById(decoded._id).populate("role");
+      if (!user)
+        return res.status(403).send({
+          type: "authorization",
+          code: "02",
           message: "user is not exists",
         });
-      // Check User Role
-      if (decoded.access !== "admin")
-        return res.status(401).send({
-          type: "authorization",
-          code: "03",
-          message: "user is not a admin",
-        });
+
       // check if password has not changed after creating the Token
       if (user.whenPasswordChanged) {
         const currentTimeStamp = parseInt(
@@ -40,17 +49,43 @@ const AdminAuthorization = async (req, res, next) => {
         if (currentTimeStamp > decoded.iat) {
           return res.status(403).send({
             type: "authorization",
-            code: "04",
+            code: "03",
             message:
               "password had been changed after the Token created.login again",
           });
         }
       }
-      return next();
+      // Check User Role
+      const role = user.role;
+
+      if (role.fullAccess) {
+        return next();
+      } else {
+        let check = false;
+        for (let i = 0; i < role.permissions.length; i++) {
+          if (
+            permissions[i].url === req.path &&
+            permissions[i].method === req.method
+          ) {
+            check = true;
+            break;
+          }
+        }
+        if (!check)
+          return res.status(403).send({
+            type: "authorization",
+            code: "04",
+            message: "user does not have the permission to use this url",
+          });
+        else return next();
+      }
+
+      // server error
+      return res.status(500).send({ type: "server error", code: "05" });
     } catch (error) {
       res
         .status(403)
-        .send({ type: "authorization", code: "02", message: error.message });
+        .send({ type: "authorization", code: "06", message: error.message });
     }
   }
 };
@@ -160,7 +195,6 @@ const activation = async (req, res, next) => {
   }
 };
 
-const authorization = async (req, res, next) => {};
 
 export default {
   AdminAuthorization,

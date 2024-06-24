@@ -5,13 +5,8 @@ const roleSchema = new Schema(
   {
     roleName: { type: String, required: true, unique: true },
     description: String,
-    fullAccess: { type: String, required: true },
-    permissions: [
-      {
-        url: String,
-        method: String,
-      },
-    ],
+    fullAccess: { type: String, default: false },
+    permissions: [String],
   },
   { timestamps: true }
 );

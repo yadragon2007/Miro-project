@@ -12,7 +12,7 @@ const validateBodyProperties = (allowedProperties) => {
     );
 
     if (invalidProperties.length > 0) {
-      return res.status(400).json({
+      return res.status(422).json({
         errors: `Invalid properties: ${invalidProperties.join(", ")}`,
       });
     }
