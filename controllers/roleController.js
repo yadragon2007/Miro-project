@@ -19,6 +19,16 @@ const getAllRoles_get = async (req, res) => {
   }
 };
 
+const getRole_post = async (req, res) => {
+  try {
+    const data = req.body;
+    const role = await RoleServes.getRole(data);
+    res.status(200).send(role);
+  } catch (error) {
+    return res.status(500).send({ msg: `Internal Server Error`, error });
+  }
+};
+
 const updateRole_put = async (req, res) => {
   try {
     const { roleId: id } = req.body;
@@ -45,6 +55,7 @@ const deleteRole_delete = async (req, res) => {
 export default {
   addRole_post,
   getAllRoles_get,
+  getRole_post,
   updateRole_put,
   deleteRole_delete,
 };

@@ -19,9 +19,10 @@ const getAllRoles = async () => {
   }
 };
 
-const getRole = async (roleName) => {
+const getRole = async (data) => {
   try {
-    const role = await Role.findOne({ roleName });
+  
+    const role = await Role.findOne(data);
     return role;
   } catch (error) {
     if (error) throw error;

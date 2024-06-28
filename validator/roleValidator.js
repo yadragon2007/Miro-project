@@ -23,6 +23,37 @@ const addRole = [
     .withMessage("permissions indexes must be string"),
 ];
 
+const getRole = [
+  body("_id")
+    .optional()
+    .notEmpty()
+    .withMessage("roleId must not be empty")
+    .isString()
+    .withMessage("roleId must be string")
+    .isMongoId()
+    .withMessage("roleId must be valid mongoId")
+    .custom(async (id) => {
+      const role = await Role.findById(id);
+      if (!role)
+        return Promise.reject(
+          new Error(`there is no role with this id (${id})`)
+        );
+    }),
+  body("roleName")
+    .optional()
+    .notEmpty()
+    .withMessage("roleName must not be empty")
+    .isString()
+    .withMessage("roleName must be String")
+    .custom(async (roleName, { req }) => {
+      const role = await Role.findOne({ roleName });
+      if (!role)
+        return Promise.reject(
+          new Error(`there is a room with this name (${roleName})`)
+        );
+    }),
+];
+
 const updateRole = [
   body("roleId")
     .notEmpty()
@@ -90,4 +121,4 @@ const deleteRole = [
     }),
 ];
 
-export default { addRole, updateRole, deleteRole };
+export default { addRole, getRole, updateRole, deleteRole };

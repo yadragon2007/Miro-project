@@ -2,6 +2,7 @@ import Owner from "../models/ownersModel.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import envConfig from "../config/envConfig.js";
+import ownerService from "../services/ownerService.js";
 
 // @route   POST api/owner/login
 // @desc    owner login
@@ -18,17 +19,73 @@ const ownerlogin_post = async (req, res) => {
       { expiresIn: envConfig.JWT.expire }
     );
     // response
-    res.status(200).send({ msg: "loged in successflly", data: owner, Token });
+    res.status(200).send({ msg: "loged in successfully", data: owner, Token });
   } catch (error) {
     return res.status(500).send({ msg: `Internal Server Error`, error });
   }
 };
 
-const changeOwnerUserNameAndPassword = async (req, res) => {
+const changeOwnerPassword_patch = async (req, res) => {
   try {
+    const { oldPassword, newPassword, confirmPassword } = req.body;
+    const { _id: ownerId } = req.user;
+
+    const owner = await Owner.findById(ownerId);
+
+    // check if old password is true
+    const isMatch = await bcrypt.compare(oldPassword, owner.password);
+    if (!isMatch)
+      return res.status(400).send({ msg: "old password is not correct" });
+    // check if newPassword equal confirmPassword
+    if (newPassword !== confirmPassword)
+      return res
+        .status(400)
+        .send({ msg: "new password and confirm password are not equal" });
+    // hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await ownerService.updateOwner(ownerId, { password: hashedPassword });
+    // response
+    return res.status(200).send({ msg: "password changed successfully" });
   } catch (error) {
     return res.status(500).send({ msg: `Internal Server Error`, error });
   }
 };
 
-export default { ownerlogin_post, changeOwnerUserNameAndPassword };
+const updateOwner_put = async (req, res) => {
+  try {
+    const { _id: ownerId } = req.user;
+    let data = req.body;
+    const owner = await ownerService.updateOwner(ownerId, data);
+    // response
+    return res
+      .status(200)
+      .send({ msg: "owner updated successfully successfully", data: owner });
+  } catch (error) {
+    return res.status(500).send({ msg: `Internal Server Error`, error });
+  }
+};
+
+const ownerRest_delete = async (req, res) => {
+  try {
+    const { _id: ownerId } = req.user;
+    const { password } = req.body;
+    const owner = await Owner.findById(ownerId);
+    // check if password is true
+    const isMatch = await bcrypt.compare(password, owner.password);
+    if (!isMatch)
+      return res.status(400).send({ msg: "password is not correct" });
+    // delete owner
+    await ownerService.deleteOwner(ownerId);
+    // response
+    return res.status(200).send({ msg: "owner deleted successfully" });
+  } catch (error) {
+    return res.status(500).send({ msg: `Internal Server Error`, error });
+  }
+};
+
+export default {
+  ownerlogin_post,
+  changeOwnerPassword_patch,
+  updateOwner_put,
+  ownerRest_delete,
+};

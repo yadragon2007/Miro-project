@@ -28,6 +28,19 @@ router.get(
   roleController.getAllRoles_get
 );
 
+// @route   POST api/role/get
+// @desc    get a role
+// @access  Private
+const getRoleProperties = ["roleName", "roleId"];
+router.post(
+  "/get",
+  authorization.AdminAuthorization,
+  localValidationFunction.validateBodyProperties(getRoleProperties, true),
+  roleValidator.getRole,
+  localValidationFunction.errorHandler,
+  roleController.getRole_post
+);
+
 // @route   PUT api/role/
 // @desc    update role
 // @access  Private

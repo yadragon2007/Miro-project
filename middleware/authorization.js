@@ -59,6 +59,8 @@ const AdminAuthorization = async (req, res, next) => {
       const role = user.role;
 
       if (role.fullAccess) {
+        req.user = {};
+        req.user._id = user._id;
         return next();
       } else {
         let check = false;
@@ -71,13 +73,16 @@ const AdminAuthorization = async (req, res, next) => {
             break;
           }
         }
-        if (!check)
+        if (!check) {
           return res.status(403).send({
             type: "authorization",
             code: "04",
             message: "user does not have the permission to use this url",
           });
-        else return next();
+        } else {
+          req._id = user._id;
+          return next();
+        }
       }
 
       // server error
@@ -194,7 +199,6 @@ const activation = async (req, res, next) => {
       .send({ type: "authorization", code: "02", message: error.message });
   }
 };
-
 
 export default {
   AdminAuthorization,

@@ -4,6 +4,7 @@ import Role from "../models/roleModel.js";
 import RoleServes from "../services/RoleServes.js";
 import bcrypt from "bcrypt";
 import ownerService from "../services/ownerService.js";
+import { name } from "ejs";
 
 const checkOwnerAccount = async (req, res, next) => {
   try {
@@ -20,9 +21,9 @@ const checkOwnerAccount = async (req, res, next) => {
 const createOwnerAccount = async (req, res, next) => {
   try {
     // get owner role Id
-    const ownerRole = await RoleServes.getRole("owner");
+    const ownerRole = await RoleServes.getRole({ roleName: "owner" });
 
-    if (!ownerRole._id)
+    if (!ownerRole)
       return res
         .status(500)
         .send({ code: 2, msg: `Internal Server Error`, error: ownerRole });

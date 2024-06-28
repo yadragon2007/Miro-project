@@ -18,16 +18,50 @@ router.post(
   ownerController.ownerlogin_post
 );
 
-// @route   POST api/owner/login
-// @desc    owner login
+// @route   patch api/owner/password/change
+// @desc    update owner's password
 // @access  Private
+const updatePasswordProperties = [
+  "oldPassword",
+  "newPassword",
+  "confirmPassword",
+];
 router.patch(
+  "/password/change",
+  authorization.AdminAuthorization,
+  localValidationFunction.validateBodyProperties(
+    updatePasswordProperties,
+    true
+  ),
+  ownerValidator.changePassword,
+  localValidationFunction.errorHandler,
+  ownerController.changeOwnerPassword_patch
+);
+
+// @route   patch api/owner/
+// @desc    update owner's password
+// @access  Private
+const updateOwnerProperties = ["fullName", "email"];
+router.put(
   "/",
   authorization.AdminAuthorization,
-  ownerValidator.ownerLogin,
+  localValidationFunction.validateBodyProperties(updateOwnerProperties, true),
+  ownerValidator.updateOwner,
   localValidationFunction.errorHandler,
-  authentication.ownerAuthentication,
-  ownerController.ownerlogin_post
+  ownerController.updateOwner_put
+);
+
+// @route   patch api/owner/
+// @desc    update owner's password
+// @access  Private
+const restOwnerProperties = ["password"];
+router.delete(
+  "/",
+  authorization.AdminAuthorization,
+  localValidationFunction.validateBodyProperties(restOwnerProperties, true),
+  ownerValidator.updateOwner,
+  localValidationFunction.errorHandler,
+  ownerController.ownerRest_delete
 );
 
 export default router;
