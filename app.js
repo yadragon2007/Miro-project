@@ -28,6 +28,9 @@ app.use(ownerRoleCreation.checkOwnerRole);
 // check Owner account
 import ownerAccountCreation from "./middleware/defaultOwnerAccount.js";
 app.use(ownerAccountCreation.checkOwnerAccount);
+// check User Role
+import userRoleCreation from "./middleware/userRoleCreation.js";
+app.use(userRoleCreation.checkUserRole);
 /*====================== routes =======================*/
 import accounts from "./routers/Accounts.js";
 import activation from "./routers/avtivation.js";
@@ -36,6 +39,7 @@ import promoCode from "./routers/promoCode.js";
 import currency from "./routers/currency.js";
 import owner from "./routers/owner.js";
 import role from "./routers/role.js";
+import employee from "./routers/employee.js";
 
 app.use("/api/accounts", accounts);
 app.use("/api/activation", activation);
@@ -44,6 +48,7 @@ app.use("/api/promoCode", promoCode);
 app.use("/api/currency", currency);
 app.use("/api/owner", owner);
 app.use("/api/role", role);
+app.use("/api/employee", employee);
 // 404
 app.use((req, res) => {
   res.status(404).send("not found 404");

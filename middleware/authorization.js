@@ -65,10 +65,7 @@ const AdminAuthorization = async (req, res, next) => {
       } else {
         let check = false;
         for (let i = 0; i < role.permissions.length; i++) {
-          if (
-            permissions[i].url === req.path &&
-            permissions[i].method === req.method
-          ) {
+          if (permissions[i] === req.baseUrl) {
             check = true;
             break;
           }

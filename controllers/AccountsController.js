@@ -14,7 +14,7 @@ const add_account_post = async (req, res) => {
     let hashedPassword = await bcrypt.hash(data.password, salt);
     data.password = hashedPassword;
     // save
-    const newAccount = await Accounts.create(data);
+    // const newAccount = new Accounts({...data,role})
     // create a TOKEN
     const Token = jwt.sign(
       { id: newAccount._id, email: data.email, role: newAccount.role },
