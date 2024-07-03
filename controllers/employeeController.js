@@ -27,8 +27,8 @@ const addEmployee_post = async (req, res) => {
 
 const employeeLogin_post = async (req, res) => {
   try {
-    const { email, password } = req.body;
-    const empoyee = await employeeService.getEmpolyee({ email });
+    const { email } = req.body;
+    const employee = await employeeService.getEmpolyee({ email });
     // create Token
     const Token = JWT.sign(
       { _id: employee._id, title: "Employee" },
