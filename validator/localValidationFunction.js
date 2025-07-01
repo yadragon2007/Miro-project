@@ -6,7 +6,6 @@ const myValidationResult = validationResult.withDefaults({
 const validateBodyProperties = (allowedProperties, notEmpty) => {
   function NotEmptyCheck(req, res, next) {
     const bodyPropertiesLength = Object.keys(req.body).length;
-    console.log(bodyPropertiesLength);
     if (bodyPropertiesLength === 0 && notEmpty)
       return res.status(422).json({
         errors: `body properties required`,

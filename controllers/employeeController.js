@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import employeeService from "../services/employeeService.js";
 import JWT from "jsonwebtoken";
-import envConfig from "../confg/envConfig.js";
+import envConfig from "../config/envConfig.js";
 
 const addEmployee_post = async (req, res) => {
   try {

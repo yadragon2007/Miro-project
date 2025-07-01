@@ -40,6 +40,7 @@ import currency from "./routers/currency.js";
 import owner from "./routers/owner.js";
 import role from "./routers/role.js";
 import employee from "./routers/employee.js";
+import tickets from "./routers/tickets.js";
 
 app.use("/api/accounts", accounts);
 app.use("/api/activation", activation);
@@ -49,6 +50,7 @@ app.use("/api/currency", currency);
 app.use("/api/owner", owner);
 app.use("/api/role", role);
 app.use("/api/employee", employee);
+app.use("/api/ticket/", tickets);
 // 404
 app.use((req, res) => {
   res.status(404).send("not found 404");

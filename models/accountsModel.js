@@ -15,14 +15,43 @@ const accountsSchema = new Schema(
       minlength: [8, "password is too short"],
     },
     whenPasswordChanged: Date,
-    role: { type: Schema.Types.ObjectId , ref:"Role", required: true },
-    activation: { type: Boolean, required: true, default: false, },
+    role: { type: Schema.Types.ObjectId, ref: "Role", required: true },
+    activation: { type: Boolean, required: true, default: false },
     location: {
       country: String,
       governorate: String,
       latitude: String,
       longitude: String,
     },
+    reservations: [
+      {
+        hotelId: { type: Schema.Types.ObjectId, ref: "Hotels" },
+        bookedRooms: [
+          {
+            roomNumber: { type: String },
+            roomType: { type: String },
+            roomPriceBerNight: { type: Number },
+          },
+        ],
+        date: {
+          form: Date,
+          to: Date,
+        },
+        persons: {
+          adults: Number,
+          children: Number,
+        },
+        meals: [
+          {
+            mealName: { type: String },
+            pricePerDay: { type: String },
+          },
+        ],
+        totalPrice: { type: Number },
+        moreDetails: { type: String },
+        stutus: { type: String },
+      },
+    ],
   },
   { timestamps: true }
 );

@@ -130,7 +130,7 @@ const UserAuthorization = async (req, res, next) => {
         }
       }
       // add user to request object
-      req.body.userId = user._id;
+      req.body.userId = user.id;
 
       return next();
     } catch (error) {

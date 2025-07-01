@@ -30,7 +30,7 @@ const hotelsSchema = new Schema({
         },
       },
 
-      pricePerDay: String,
+      pricePerDay: Object,
     },
   ],
   rooms: [
@@ -42,9 +42,19 @@ const hotelsSchema = new Schema({
       pricePerDay: String,
       numberOfRooms: Number,
       emptyRooms: Number,
-      bookedRooms: { type: Number, default: 0 },
     },
   ],
+  bookedRooms: [
+    {
+      date: Date,
+      rooms: {
+        name: String,
+        roomNumber: String,
+        user: Schema.Types.ObjectId,
+      },
+    },
+  ],
+
   comments: [
     {
       userId: { type: Schema.Types.ObjectId, ref: "User" },
