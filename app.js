@@ -42,15 +42,15 @@ import role from "./routers/role.js";
 import employee from "./routers/employee.js";
 import tickets from "./routers/tickets.js";
 
-app.use("/api/accounts", accounts);
-app.use("/api/activation", activation);
-app.use("/api/hotel", hotel);
-app.use("/api/promoCode", promoCode);
-app.use("/api/currency", currency);
-app.use("/api/owner", owner);
-app.use("/api/role", role);
-app.use("/api/employee", employee);
-app.use("/api/ticket/", tickets);
+app.use("/api/v1/accounts", accounts);
+app.use("/api/v1/activation", activation);
+app.use("/api/v1/hotel", hotel);
+app.use("/api/v1/promoCode", promoCode);
+app.use("/api/v1/currency", currency);
+app.use("/api/v1/owner", owner);
+app.use("/api/v1/role", role);
+app.use("/api/v1/employee", employee);
+app.use("/api/v1/ticket/", tickets);
 // 404
 app.use((req, res) => {
   res.status(404).send("not found 404");

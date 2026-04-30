@@ -1,7 +1,8 @@
 import bcrypt from "bcrypt";
-import Accounts from "../models/accountsModel.js";
 import jwt from "jsonwebtoken";
 import envConfig from "../config/envConfig.js";
+import RoleServes from "../services/RoleServes.js";
+import accountService from "../services/accountService.js";
 
 // @route   PSOT api/accounts/
 // @desc    Create an user
@@ -13,13 +14,16 @@ const add_account_post = async (req, res) => {
     let salt = await bcrypt.genSalt(10);
     let hashedPassword = await bcrypt.hash(data.password, salt);
     data.password = hashedPassword;
+    // get user role
+    const { roleId } = await RoleServes.getRole({ roleName: "user" });
+    data.role = roleId;
     // save
-    // const newAccount = new Accounts({...data,role})
+    const newAccount = await accountService.addAccount(data);
     // create a TOKEN
     const Token = jwt.sign(
       { id: newAccount._id, email: data.email, role: newAccount.role },
       envConfig.JWT.secret,
-      { expiresIn: envConfig.JWT.expire }
+      { expiresIn: envConfig.JWT.expire },
     );
     req.session.Token = Token;
     res.status(201).send({ data: req.body, Token });
@@ -34,13 +38,13 @@ const add_account_post = async (req, res) => {
 const login_post = async (req, res) => {
   let { email, password } = req.body;
   try {
-    const account = await Accounts.findOne({ email });
+    const account = await accountService.getAccount({ email });
 
     // create a TOKEN
     const Token = jwt.sign(
       { id: account._id, email: account.email, role: account.role },
       envConfig.JWT.secret,
-      { expiresIn: envConfig.JWT.expire }
+      { expiresIn: envConfig.JWT.expire },
     );
 
     res.status(200).send({ data: account, Token });
@@ -53,7 +57,7 @@ const login_post = async (req, res) => {
 // @desc    Get all accounts
 // @access  Private
 const allUsers_get = async (req, res) => {
-  const users = await Accounts.find();
+  const users = await accountService.getAllAccounts();
   return res.status(200).send(users);
 };
 
@@ -62,7 +66,7 @@ const allUsers_get = async (req, res) => {
 // @access  Private
 const getUserById_post = async (req, res) => {
   const { userId } = req.body;
-  const user = await Accounts.findById(userId);
+  const user = await accountService.getAccountById(userId);
   return res.status(200).send(user);
 };
 
@@ -74,14 +78,14 @@ const updateAccountPassword_admin_patch = async (req, res) => {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = await Accounts.findById(id);
+    const user = await accountService.getAccountById(id);
     if (!user) return res.status(404).send("User not found.");
 
-    const updatedUser = await Accounts.findByIdAndUpdate(id, {
-      password: hashedPassword,
-      whenPasswordChanged: Date.now(),
-    });
-    const currentUser = await Accounts.findById(id);
+    const updatedUser = await accountService.updateAccountPassword(
+      id,
+      hashedPassword,
+    );
+    const currentUser = await accountService.getAccountById(id);
 
     return res.status(200).send(currentUser);
   } catch (error) {
@@ -97,16 +101,13 @@ const updateAccountPassword_user_patch = async (req, res) => {
   if (newPassword !== confirmPassword)
     return res.status(400).send("Those passwords didn’t match. Try again.");
 
-  const user = await Accounts.findById(userId);
+  const user = await accountService.getAccountById(userId);
 
   const checkPassword = await bcrypt.compare(oldPassword, user.password);
   if (!checkPassword) return res.status(400).send("Password is fales");
 
   const hashedPassword = await bcrypt.hash(newPassword, 10);
-  await Accounts.findByIdAndUpdate(userId, {
-    password: hashedPassword,
-    whenPasswordChanged: Date.now(),
-  });
+  await accountService.updateAccountPassword(userId, hashedPassword);
 
   return res.status(200).send("password updated successfully");
 };
@@ -123,8 +124,8 @@ const updatedUser_put = async (req, res) => {
   if (req.body.location) data.location = req.body.location;
 
   try {
-    await Accounts.findByIdAndUpdate(userId, data);
-    const user = await Accounts.findById(userId);
+    await accountService.updateAccount(userId, data);
+    const user = await accountService.getAccountById(userId);
 
     return res.status(200).send({
       message: "userData updated successflly",
@@ -141,7 +142,7 @@ const updatedUser_put = async (req, res) => {
 const delete_user = async (req, res) => {
   const { userId } = req.body;
   try {
-    await Accounts.findByIdAndDelete(userId);
+    await accountService.deleteAccount(userId);
     return res.status(200).send("account removed");
   } catch (error) {
     res.status(500).send({ message: error });

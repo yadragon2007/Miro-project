@@ -55,9 +55,10 @@ const getSpecificHotel_post = async (req, res) => {
 // @access  Private
 const updateHotel_put = async (req, res) => {
   const data = req.body;
+  const {hotelId} = data;
   delete data.hotelId;
 
-  await Hotels.findByIdAndUpdate(data.hotelId, data);
+  await Hotels.findByIdAndUpdate(hotelId, data);
   res.status(200).send("hotel updated successfully");
 };
 
