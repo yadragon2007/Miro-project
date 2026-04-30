@@ -2,13 +2,14 @@ import Accounts from "../models/accountsModel.js";
 import nodemailer from "nodemailer";
 import jwt from "jsonwebtoken";
 import envConfig from "../config/envConfig.js";
+import accountService from "../services/accountService.js";
 
 // @route   POST api/activation/
 // @desc    Send activation url
 // @access  Public
 const account_activation_post = async (req, res) => {
   const { userId } = req.body;
-  const userData = await Accounts.findById(userId);
+  const userData = await accountService.getAccountById(userId);
   // check if user is already activated
   if (userData.activation)
     return res.status(200).send("user account is already activated");
@@ -67,8 +68,8 @@ const account_activation_post = async (req, res) => {
 const check_account_activation_get = async (req, res) => {
   const { id } = req.params;
 
-  await Accounts.findByIdAndUpdate(id, { activation: true });
-  const user = await Accounts.findById(id);
+  await accountService.updateAccount(id, { activation: true });
+  const user = await accountService.getAccount(id);
 
   return res
     .status(200)

@@ -4,7 +4,6 @@ import Role from "../models/roleModel.js";
 import RoleServes from "../services/RoleServes.js";
 import bcrypt from "bcrypt";
 import ownerService from "../services/ownerService.js";
-import { name } from "ejs";
 
 const checkOwnerAccount = async (req, res, next) => {
   try {

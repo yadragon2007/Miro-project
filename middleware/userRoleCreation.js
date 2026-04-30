@@ -1,4 +1,3 @@
-import { escapeXML } from "ejs";
 import Role from "../models/roleModel.js";
 import RoleServes from "../services/RoleServes.js";
 
