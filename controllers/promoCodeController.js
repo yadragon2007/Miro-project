@@ -1,5 +1,16 @@
 import PromoCode from "../models/promoCodeModel.js";
 
+const buildSafeFilter = (query, allowedKeys) => {
+  const safeFilter = {};
+  for (const key of allowedKeys) {
+    const value = query[key];
+    if (value === undefined) continue;
+    if (typeof value === "string" && value.includes("$")) continue;
+    safeFilter[key] = value;
+  }
+  return safeFilter;
+};
+
 const addPromoCode_post = async (req, res) => {
   try {
     const newPromoCode = new PromoCode(req.body);
@@ -15,7 +26,7 @@ const addPromoCode_post = async (req, res) => {
 
 const getAllPromoCode_get = async (req, res) => {
   try {
-    const filter = req.query;
+    const filter = buildSafeFilter(req.query, ["code", "forAllHotels", "forAllUsers"]);
     const allPromoCodes = await PromoCode.find(filter);
     return res.status(200).send({
       msg: "promoCodes have been got successfully",
@@ -47,7 +58,7 @@ const updatePromoCode_put = async (req, res) => {
   delete data.promoCodeId;
   try {
     await PromoCode.findByIdAndUpdate(promoCodeId, data);
-    const newPromoCode = await PromoCode.findByIdAndUpdate(promoCodeId);
+    const newPromoCode = await PromoCode.findById(promoCodeId);
 
     return res.status(200).send({
       msg: "promoCode updated successfully",

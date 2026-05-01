@@ -1,12 +1,29 @@
 import Currency from "../models/currencyModel.js";
 import currencyService from "../services/currencyService.js";
 
+const buildSafeFilter = (query, allowedKeys) => {
+  const safeFilter = {};
+  for (const key of allowedKeys) {
+    const value = query[key];
+    if (value === undefined) continue;
+    if (typeof value === "string" && value.includes("$")) continue;
+    safeFilter[key] = value;
+  }
+  return safeFilter;
+};
+
 // @route   POST api/currency/
 // @desc    add currency
 // @access  Private
 const addCurrency_post = async (req, res) => {
   try {
-    const data = req.body;
+    const {
+      currencyCode,
+      symbol,
+      thousands_separator,
+      decimal_separator,
+    } = req.body;
+    const data = { currencyCode, symbol, thousands_separator, decimal_separator };
     const newCurrency = new Currency(data);
     const currency = await newCurrency.save();
     return res
@@ -22,7 +39,9 @@ const addCurrency_post = async (req, res) => {
 // @access  Private
 const getSpecificCurrency_post = async (req, res) => {
   try {
-    const data = req.body;
+    const data = {};
+    if (req.body.currencyCode) data.currencyCode = req.body.currencyCode;
+    if (req.body._id) data._id = req.body._id;
 
     const currency = await Currency.findOne(data);
 
@@ -37,7 +56,7 @@ const getSpecificCurrency_post = async (req, res) => {
 // @access  Private
 const getAllCurrencies_get = async (req, res) => {
   try {
-    const filter = req.query;
+    const filter = buildSafeFilter(req.query, ["currencyCode", "symbol"]);
     const allCurrencies = await Currency.find(filter);
 
     return res.status(200).send({ data: allCurrencies });

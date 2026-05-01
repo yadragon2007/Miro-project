@@ -7,7 +7,6 @@ const bookTicket_post = async (req, res) => {
     const {
       hotelId,
       promoCode: code,
-      userId,
       roomName,
       checkInDate,
       checkOutDate,
@@ -15,6 +14,7 @@ const bookTicket_post = async (req, res) => {
       children,
       meals,
     } = req.body;
+    const userId = req.auth.userId;
 
     const user = await Accounts.findById(userId);
     const hotel = await Hotels.findById(hotelId);
@@ -22,13 +22,13 @@ const bookTicket_post = async (req, res) => {
     // check in date data
     const checkIn = new Date(
       checkInDate.year,
-      checkInDate.month,
+      checkInDate.month - 1,
       checkInDate.day
     );
     // check out date data
     const checkOut = new Date(
       checkOutDate.year,
-      checkOutDate.month,
+      checkOutDate.month - 1,
       checkOutDate.day
     );
     // days that user will spend in hotel

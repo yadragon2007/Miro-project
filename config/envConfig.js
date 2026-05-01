@@ -1,25 +1,35 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+const requireEnv = (key) => {
+  const value = process.env[key];
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${key}`);
+  }
+  return value;
+};
+
 export default {
   Email: {
-    email: process.env.Email,
-    password: process.env.PASSWORD,
+    email: requireEnv("EMAIL"),
+    password: requireEnv("PASSWORD"),
   },
   JWT: {
-    secret: process.env.JWT_SECRET_KEY,
-    expire: process.env.JWT_EXPIRE,
+    secret: requireEnv("JWT_SECRET_KEY"),
+    expire: requireEnv("JWT_EXPIRE"),
   },
   Activation: {
-    secret: process.env.ACTIVATION_SECRET,
-    expire: process.env.ACTIVATION_EXPIRE,
+    secret: requireEnv("ACTIVATION_SECRET"),
+    expire: requireEnv("ACTIVATION_EXPIRE"),
   },
   ExchangeRate_API: {
-    apiKey: process.env.EXCHANGE_API_KEY,
+    apiKey: requireEnv("EXCHANGE_API_KEY"),
   },
-  port: process.env.PORT,
+  sessionSecret: requireEnv("SESSION_SECRET"),
+  dbUri: requireEnv("MONGODB_URI"),
+  port: process.env.PORT || "8080",
   Owner: {
-    email: process.env.OWNER_ACCOUNT_EMAIL,
-    password: process.env.OWNER_ACCOUNT_PASSWORD,
+    email: requireEnv("OWNER_ACCOUNT_EMAIL"),
+    password: requireEnv("OWNER_ACCOUNT_PASSWORD"),
   },
 };

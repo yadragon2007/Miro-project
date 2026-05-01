@@ -3,6 +3,13 @@ import employeeService from "../services/employeeService.js";
 import JWT from "jsonwebtoken";
 import envConfig from "../config/envConfig.js";
 
+const sanitizeEmployee = (employee) => ({
+  _id: employee._id,
+  fullName: employee.fullName,
+  email: employee.email,
+  role: employee.role,
+});
+
 const addEmployee_post = async (req, res) => {
   try {
     const { password } = req.body;
@@ -19,7 +26,7 @@ const addEmployee_post = async (req, res) => {
         expiresIn: envConfig.JWT.expire,
       }
     );
-    res.status(201).json({ employee, Token });
+    res.status(201).json({ employee: sanitizeEmployee(employee), Token });
   } catch (error) {
     return res.status(500).send({ msg: `Internal Server Error`, error });
   }
@@ -38,7 +45,7 @@ const employeeLogin_post = async (req, res) => {
       }
     );
     // response
-    res.status(200).json({ employee, Token });
+    res.status(200).json({ employee: sanitizeEmployee(employee), Token });
   } catch (error) {
     return res.status(500).send({ msg: `Internal Server Error`, error });
   }

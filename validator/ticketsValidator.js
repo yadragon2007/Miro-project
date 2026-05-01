@@ -5,18 +5,6 @@ import Hotels from "../models/hotelModel.js";
 import PromoCode from "../models/promoCodeModel.js";
 
 const bookTicket = [
-  body("userId")
-    .notEmpty()
-    .withMessage("userId is required")
-    .isString()
-    .withMessage("userId must be a string")
-    .isMongoId()
-    .withMessage("userId must be a valid mongo id")
-    .custom(async (id) => {
-      const user = await Accounts.findById(id);
-      if (!user) return Promise.reject(new Error("this user is not exist"));
-      else return;
-    }),
   body("hotelId")
     .notEmpty()
     .withMessage("hotelId is required")
@@ -47,13 +35,14 @@ const bookTicket = [
     .withMessage("promoCode must be a string")
     .custom(async (code, { req }) => {
       const promoCode = await PromoCode.findOne({ code });
-      const { hotelId, userId } = req.body;
+      const { hotelId } = req.body;
+      const userId = req.auth.userId;
       // check if promoCode is exist
       if (!promoCode)
         return Promise.reject(new Error("this code is not exist"));
       // check if promoCode is not expired
       const date = new Date();
-      if (promoCode.expirationDate.getTime < date.getTime)
+      if (promoCode.expirationDate.getTime() < date.getTime())
         return Promise.reject(new Error("this promoCode is expired"));
       // check if hotel can access this promoCode
       if (promoCode.forAllHotels === false) {

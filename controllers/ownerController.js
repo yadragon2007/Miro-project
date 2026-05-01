@@ -19,7 +19,16 @@ const ownerlogin_post = async (req, res) => {
       { expiresIn: envConfig.JWT.expire }
     );
     // response
-    res.status(200).send({ msg: "loged in successfully", data: owner, Token });
+    res.status(200).send({
+      msg: "loged in successfully",
+      data: {
+        _id: owner._id,
+        fullName: owner.fullName,
+        email: owner.email,
+        role: owner.role,
+      },
+      Token,
+    });
   } catch (error) {
     return res.status(500).send({ msg: `Internal Server Error`, error });
   }
@@ -28,9 +37,9 @@ const ownerlogin_post = async (req, res) => {
 const changeOwnerPassword_patch = async (req, res) => {
   try {
     const { oldPassword, newPassword, confirmPassword } = req.body;
-    const { _id: ownerId } = req.user;
+    const ownerId = req.auth.adminId;
 
-    const owner = await Owner.findById(ownerId);
+    const owner = await Owner.findById(ownerId).select("+password");
 
     // check if old password is true
     const isMatch = await bcrypt.compare(oldPassword, owner.password);
@@ -53,7 +62,7 @@ const changeOwnerPassword_patch = async (req, res) => {
 
 const updateOwner_put = async (req, res) => {
   try {
-    const { _id: ownerId } = req.user;
+    const ownerId = req.auth.adminId;
     let data = req.body;
     const owner = await ownerService.updateOwner(ownerId, data);
     // response
@@ -67,9 +76,9 @@ const updateOwner_put = async (req, res) => {
 
 const ownerRest_delete = async (req, res) => {
   try {
-    const { _id: ownerId } = req.user;
+    const ownerId = req.auth.adminId;
     const { password } = req.body;
-    const owner = await Owner.findById(ownerId);
+    const owner = await Owner.findById(ownerId).select("+password");
     // check if password is true
     const isMatch = await bcrypt.compare(password, owner.password);
     if (!isMatch)

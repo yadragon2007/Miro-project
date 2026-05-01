@@ -1,5 +1,16 @@
 import Hotels from "../models/hotelModel.js";
 
+const buildSafeFilter = (query, allowedKeys) => {
+  const safeFilter = {};
+  for (const key of allowedKeys) {
+    const value = query[key];
+    if (value === undefined) continue;
+    if (typeof value === "string" && value.includes("$")) continue;
+    safeFilter[key] = value;
+  }
+  return safeFilter;
+};
+
 // @route   POST api/hotel/
 // @desc    Add hotel
 // @access  Private
@@ -19,7 +30,7 @@ const addHotel_post = async (req, res) => {
 // @desc    Get all hotels
 // @access  Private
 const getAllHotels_get = async (req, res) => {
-  const filter = req.query;
+  const filter = buildSafeFilter(req.query, ["name", "stars", "currency"]);
   const hotels = await Hotels.find(filter);
   res.status(200).send(hotels);
 };
@@ -54,9 +65,13 @@ const getSpecificHotel_post = async (req, res) => {
 // @desc    update hotel [ "name" , "description" , "stars" , "location" ]
 // @access  Private
 const updateHotel_put = async (req, res) => {
-  const data = req.body;
-  const {hotelId} = data;
-  delete data.hotelId;
+  const { hotelId, name, description, stars, location, phone } = req.body;
+  const data = {};
+  if (name !== undefined) data.name = name;
+  if (description !== undefined) data.description = description;
+  if (stars !== undefined) data.stars = stars;
+  if (location !== undefined) data.location = location;
+  if (phone !== undefined) data.phone = phone;
 
   await Hotels.findByIdAndUpdate(hotelId, data);
   res.status(200).send("hotel updated successfully");

@@ -59,25 +59,19 @@ const AdminAuthorization = async (req, res, next) => {
       const role = user.role;
 
       if (role.fullAccess) {
-        req.user = {};
-        req.user._id = user._id;
+        req.auth = { adminId: user._id.toString(), title };
         return next();
       } else {
-        let check = false;
-        for (let i = 0; i < role.permissions.length; i++) {
-          if (permissions[i] === req.baseUrl) {
-            check = true;
-            break;
-          }
-        }
-        if (!check) {
+        const permissions = Array.isArray(role.permissions) ? role.permissions : [];
+        const hasPermission = permissions.includes(req.baseUrl);
+        if (!hasPermission) {
           return res.status(403).send({
             type: "authorization",
             code: "04",
             message: "user does not have the permission to use this url",
           });
         } else {
-          req._id = user._id;
+          req.auth = { adminId: user._id.toString(), title };
           return next();
         }
       }
@@ -130,7 +124,7 @@ const UserAuthorization = async (req, res, next) => {
         }
       }
       // add user to request object
-      req.body.userId = user.id;
+      req.auth = { userId: user.id };
 
       return next();
     } catch (error) {

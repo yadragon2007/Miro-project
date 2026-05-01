@@ -10,7 +10,6 @@ import ticketsController from "../controllers/ticketsController.js";
 // @desc    Add role
 // @access  Private
 const bookTicketProperties = [
-  "userId",
   "hotelId",
   "roomName",
   "promoCode",

@@ -2,8 +2,7 @@ import mongoose from "mongoose";
 import envConfig from "./envConfig.js";
 
 const database_conection = async () => {
-  // Handle database
-  await mongoose.connect("mongodb://localhost:27017/miroProject");
+  await mongoose.connect(envConfig.dbUri);
 };
 
 export default { database_conection };

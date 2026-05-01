@@ -27,13 +27,13 @@ const createOwnerAccount = async (req, res, next) => {
         .status(500)
         .send({ code: 2, msg: `Internal Server Error`, error: ownerRole });
     // password hashing
-    const password = envConfig.Email.password;
+    const password = envConfig.Owner.password;
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, 10);
     // add owner data
     const ownerAccountData = {
       fullName: "owner",
-      email: envConfig.Email.email,
+      email: envConfig.Owner.email,
       password: hashedPassword,
       default: true,
       role: ownerRole._id,

@@ -4,6 +4,15 @@ import envConfig from "../config/envConfig.js";
 import RoleServes from "../services/RoleServes.js";
 import accountService from "../services/accountService.js";
 
+const sanitizeAccount = (account) => ({
+  _id: account._id,
+  fullName: account.fullName,
+  email: account.email,
+  role: account.role,
+  activation: account.activation,
+  location: account.location,
+});
+
 // @route   PSOT api/accounts/
 // @desc    Create an user
 // @access  Public
@@ -26,7 +35,7 @@ const add_account_post = async (req, res) => {
       { expiresIn: envConfig.JWT.expire },
     );
     req.session.Token = Token;
-    res.status(201).send({ data: req.body, Token });
+    res.status(201).send({ data: sanitizeAccount(newAccount), Token });
   } catch (error) {
     res.status(500).send({ message: error });
   }
@@ -46,8 +55,8 @@ const login_post = async (req, res) => {
       envConfig.JWT.secret,
       { expiresIn: envConfig.JWT.expire },
     );
-
-    res.status(200).send({ data: account, Token });
+Account(account),
+    res.status(200).send({ data: sanitize Token });
   } catch (error) {
     res.status(500).send({ message: error });
   }
@@ -58,7 +67,7 @@ const login_post = async (req, res) => {
 // @access  Private
 const allUsers_get = async (req, res) => {
   const users = await accountService.getAllAccounts();
-  return res.status(200).send(users);
+  return res.status(200).send(users.map(sanitizeAccount));
 };
 
 // @route   POST api/accounts/user
@@ -67,7 +76,7 @@ const allUsers_get = async (req, res) => {
 const getUserById_post = async (req, res) => {
   const { userId } = req.body;
   const user = await accountService.getAccountById(userId);
-  return res.status(200).send(user);
+  return res.status(200).send(sanitizeAccount(user));
 };
 
 // @route   PATCH api/accounts/changePassword/admin
@@ -86,8 +95,7 @@ const updateAccountPassword_admin_patch = async (req, res) => {
       hashedPassword,
     );
     const currentUser = await accountService.getAccountById(id);
-
-    return res.status(200).send(currentUser);
+    return res.status(200).send(sanitizeAccount(currentUser));
   } catch (error) {
     return res.status(400).json({ message: error.message });
   }
@@ -97,7 +105,8 @@ const updateAccountPassword_admin_patch = async (req, res) => {
 // @desc    change password by the user
 // @access  Public
 const updateAccountPassword_user_patch = async (req, res) => {
-  const { oldPassword, newPassword, confirmPassword, userId } = req.body;
+  const { oldPassword, newPassword, confirmPassword } = req.body;
+  const userId = req.auth.userId;
   if (newPassword !== confirmPassword)
     return res.status(400).send("Those passwords didn’t match. Try again.");
 
@@ -116,7 +125,7 @@ const updateAccountPassword_user_patch = async (req, res) => {
 // @desc    Update user data
 // @access  Public
 const updatedUser_put = async (req, res) => {
-  const { userId } = req.body;
+  const userId = req.auth.userId;
   let data = {};
 
   if (req.body.fullName) data.fullName = req.body.fullName;
@@ -129,7 +138,7 @@ const updatedUser_put = async (req, res) => {
 
     return res.status(200).send({
       message: "userData updated successflly",
-      data: user,
+      data: sanitizeAccount(user),
     });
   } catch (error) {
     res.status(500).send({ message: error.message });
@@ -140,7 +149,7 @@ const updatedUser_put = async (req, res) => {
 // @desc    Delete account by ID
 // @access  Private User
 const delete_user = async (req, res) => {
-  const { userId } = req.body;
+  const userId = req.auth.userId;
   try {
     await accountService.deleteAccount(userId);
     return res.status(200).send("account removed");

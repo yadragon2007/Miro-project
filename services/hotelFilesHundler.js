@@ -5,6 +5,20 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 import Hotels from "../models/hotelModel.js";
 
+const acceptedMimeTypes = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+  "image/pjpeg",
+  "image/jfif",
+]);
+
+const buildUploadsPath = (...parts) => {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+  return path.resolve(__dirname, "..", "public", "uploads", "hotels", ...parts);
+};
+
 // add hotel folder
 const addHotelFolder = async (req, res, next) => {
   try {
@@ -15,13 +29,7 @@ const addHotelFolder = async (req, res, next) => {
     req.body.hotel = hotel;
     const id = hotel._id.toString();
     // make hotel folder path
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = path.dirname(__filename);
-    const previousFolder = path.join(__dirname, "..");
-    const folderPath = path.join(
-      previousFolder,
-      `/public/uploads/hotels/${id}`
-    );
+    const folderPath = buildUploadsPath(id);
     //create hotel folder
     fs.mkdir(folderPath, { recursive: true }, (err) => {
       if (err) {
@@ -49,11 +57,7 @@ const deleteHotelFolder = async (req, res, next) => {
   const hotel = await Hotels.findById(id);
 
   // make hotel img folder
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = path.dirname(__filename);
-  const previousFolder = path.join(__dirname, "..");
-  // folder path
-  const folderPath = path.join(previousFolder, `/public/uploads/hotels/${id}`);
+  const folderPath = buildUploadsPath(id);
   // delete folder
   fs.rmSync(folderPath, { recursive: true, force: true });
 
@@ -67,14 +71,7 @@ const destination = async (req, file, cb) => {
   const { hotelid: id } = req.headers;
   const hotel = await Hotels.findById(id);
   // make hotel img folder
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = path.dirname(__filename);
-  const previousFolder = path.join(__dirname, "..");
-  // folder path
-  const folderPath = path.join(
-    previousFolder,
-    `/public/uploads/hotels/${id}/images/${file.fieldname}`
-  );
+  const folderPath = buildUploadsPath(id, "images", file.fieldname);
   //create folder
   fs.mkdir(folderPath, { recursive: true }, (err) => {
     if (err) {
@@ -86,6 +83,10 @@ const destination = async (req, file, cb) => {
 };
 
 const filename = async (req, file, cb) => {
+  if (!acceptedMimeTypes.has(file.mimetype)) {
+    return cb(new Error(`File type not allowed "${file.mimetype}"`), false);
+  }
+
   const { hotelid: id } = req.headers;
   const hotel = await Hotels.findById(id);
 
@@ -144,7 +145,10 @@ const storage = multer.diskStorage({
   filename,
 });
 
-const upload = multer({ storage: storage });
+const uploadConfig = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+});
 
 // delete hotel images
 
@@ -154,21 +158,16 @@ const deleteHotelImages = async (req, res, next) => {
 
   // delete images files
   // get path
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = path.dirname(__filename);
-  const previousFolder = path.join(__dirname, "..");
-  // folder path
-  const folderPath = path.join(
-    previousFolder,
-    `/public/uploads/hotels/${hotelId}/images/`
-  );
+  const folderPath = buildUploadsPath(hotelId, "images");
 
   deletedImages.forEach((deletedImage) => {
     const imagePath = path.join(
       folderPath,
       `${deletedImage.imageFolder}/${deletedImage.imageName}`
     );
-    fs.unlinkSync(imagePath);
+    if (fs.existsSync(imagePath)) {
+      fs.unlinkSync(imagePath);
+    }
   });
 
   next();
@@ -176,7 +175,7 @@ const deleteHotelImages = async (req, res, next) => {
 
 export default {
   addHotelFolder,
-  upload,
+  upload: uploadConfig,
   deleteHotelFolder,
   deleteHotelImages,
 };
