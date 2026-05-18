@@ -55,8 +55,8 @@ const login_post = async (req, res) => {
       envConfig.JWT.secret,
       { expiresIn: envConfig.JWT.expire },
     );
-Account(account),
-    res.status(200).send({ data: sanitize Token });
+
+    res.status(200).send({ data: sanitizeAccount(account), Token });
   } catch (error) {
     res.status(500).send({ message: error });
   }
