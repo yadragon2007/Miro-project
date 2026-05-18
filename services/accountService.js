@@ -19,9 +19,11 @@ const getAccount = async (data) => {
   }
 };
 
-const getAccountById = async (id) => {
+const getAccountById = async (id, select) => {
   try {
-    const account = await Accounts.findById(id).populate("role");
+    const query = Accounts.findById(id).populate("role");
+    if (select) query.select(select);
+    const account = await query;
     return account;
   } catch (error) {
     throw error;

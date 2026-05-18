@@ -46,7 +46,8 @@ const bookTicket_post = async (req, res) => {
     
     console.log(mealsData);
   } catch (error) {
-    return res.status(500).send({ msg: `Internal Server Error`, error });
+    console.error(error);
+    return res.status(500).send({ msg: `Internal Server Error` });
   }
 };
 

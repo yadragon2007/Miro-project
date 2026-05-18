@@ -12,12 +12,12 @@ const sanitizeEmployee = (employee) => ({
 
 const addEmployee_post = async (req, res) => {
   try {
-    const { password } = req.body;
+    const { fullName, email, password, role } = req.body;
     // hash password
     const hashedPassword = await bcrypt.hash(password, 10);
-    req.body.password = hashedPassword;
+    const data = { fullName, email, password: hashedPassword, role };
     // save employee to db
-    const employee = await employeeService.addEmployee(req.body);
+    const employee = await employeeService.addEmployee(data);
     // create Token
     const Token = JWT.sign(
       { _id: employee._id, title: "Employee" },
@@ -28,7 +28,8 @@ const addEmployee_post = async (req, res) => {
     );
     res.status(201).json({ employee: sanitizeEmployee(employee), Token });
   } catch (error) {
-    return res.status(500).send({ msg: `Internal Server Error`, error });
+    console.error(error);
+    return res.status(500).send({ msg: `Internal Server Error` });
   }
 };
 
@@ -47,7 +48,8 @@ const employeeLogin_post = async (req, res) => {
     // response
     res.status(200).json({ employee: sanitizeEmployee(employee), Token });
   } catch (error) {
-    return res.status(500).send({ msg: `Internal Server Error`, error });
+    console.error(error);
+    return res.status(500).send({ msg: `Internal Server Error` });
   }
 };
 

@@ -13,7 +13,7 @@ const addHotel = [
       const hotel = await Hotels.findOne({ name });
       if (hotel)
         return Promise.reject(
-          new Error("there is an hotel with the same name")
+          new Error("there is an hotel with the same name"),
         );
     })
     .withMessage("there is an hotel with the same name"),
@@ -68,7 +68,7 @@ const getHotel = [
       const hotel = await Hotels.findOne({ name });
       if (!hotel)
         return Promise.reject(
-          new Error("there is no hotel with the this name")
+          new Error("there is no hotel with the this name"),
         );
     })
     .withMessage("there is no hotel with the this name"),
@@ -107,7 +107,7 @@ const updateHotel = [
       const hotel = await Hotels.findOne({ name });
       if (hotel && hotel._id != req.body.hotelId)
         return Promise.reject(
-          new Error("there is an hotel with the same name")
+          new Error("there is an hotel with the same name"),
         );
     })
     .withMessage("there is an hotel with the same name"),
@@ -140,8 +140,7 @@ const updateHotel = [
     .isString()
     .withMessage("address must be string"),
   body("phone")
-    .notEmpty({ ignore_whitespace: true })
-    .withMessage("phone required")
+    .optional()
     .isNumeric()
     .withMessage("phone must be a number")
     .isMobilePhone(phonesArray),
@@ -206,6 +205,8 @@ const deleteImg = [
     .withMessage("imageFolder must not be empty")
     .isString()
     .withMessage("imageFolder must be string")
+    .matches(/^[a-zA-Z0-9_-]+$/)
+    .withMessage("imageFolder contains invalid characters")
     .custom(async (imageFolder, { req }) => {
       const { hotelId } = req.body;
       const hotel = await Hotels.findById(hotelId);
@@ -218,6 +219,8 @@ const deleteImg = [
     .withMessage("imageName must not be empty")
     .isString()
     .withMessage("imageName must be string")
+    .matches(/^[a-zA-Z0-9_-]+(\.[a-zA-Z0-9]+)?$/)
+    .withMessage("imageName contains invalid characters")
     .custom(async (imageName, { req }) => {
       const { hotelId } = req.body;
       const hotel = await Hotels.findById(hotelId);
@@ -260,7 +263,7 @@ const updateHotelData = [
     .custom(async (name, { req }) => {
       const hotel = await Hotels.findById(req.body.hotelId);
       const feature = hotel.freeFeatures.find(
-        (feature) => feature.name === name
+        (feature) => feature.name === name,
       );
       if (feature)
         return Promise.reject(new Error("there is a feature with this name"));
@@ -598,7 +601,7 @@ const modifyHotelData = [
               return;
             } else {
               return Promise.reject(
-                new Error("number of rooms is less than booked rooms")
+                new Error("number of rooms is less than booked rooms"),
               );
             }
           }

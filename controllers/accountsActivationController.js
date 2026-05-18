@@ -1,6 +1,7 @@
 import Accounts from "../models/accountsModel.js";
 import nodemailer from "nodemailer";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import envConfig from "../config/envConfig.js";
 import accountService from "../services/accountService.js";
 
@@ -9,13 +10,16 @@ import accountService from "../services/accountService.js";
 // @access  Public
 const account_activation_post = async (req, res) => {
   const { userId } = req.body;
+  if (req.auth.userId !== userId) {
+    return res.status(403).send({ message: "Not authorized to request activation for this user" });
+  }
   const userData = await accountService.getAccountById(userId);
   // check if user is already activated
   if (userData.activation)
     return res.status(200).send("user account is already activated");
 
   try {
-    const activationCode = Math.floor(Math.random() * 100000) + 9999;
+    const activationCode = crypto.randomInt(100000, 999999);
     const Token = jwt.sign(
       { id: userData._id, activationCode },
       envConfig.Activation.secret,
@@ -35,7 +39,8 @@ const account_activation_post = async (req, res) => {
         `email has been sent successflly. link expires in ${envConfig.Activation.expire}`
       );
   } catch (error) {
-    res.status(500).send({ message: error, type: "creating activation code" });
+    console.error(error);
+    res.status(500).send({ message: "Internal server error", type: "creating activation code" });
   }
 
   async function sendMail(email, url) {
@@ -57,7 +62,8 @@ const account_activation_post = async (req, res) => {
         text: url,
       });
     } catch (error) {
-      res.status(500).send({ message: error, type: "sending email" });
+      console.error(error);
+      res.status(500).send({ message: "Internal server error", type: "sending email" });
     }
   }
 };

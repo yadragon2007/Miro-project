@@ -6,12 +6,14 @@ import authentication from "../middleware/authentication.js";
 import localValidationFunction from "../validator/localValidationFunction.js";
 import ownerValidator from "../validator/ownerValidator.js";
 import ownerController from "../controllers/ownerController.js";
+import rateLimiter from "../middleware/rateLimiter.js";
 
 // @route   POST api/owner/login
 // @desc    owner login
 // @access  Private
 router.post(
   "/login",
+  rateLimiter.authLimiter,
   ownerValidator.ownerLogin,
   localValidationFunction.errorHandler,
   authentication.ownerAuthentication,
@@ -28,6 +30,7 @@ const updatePasswordProperties = [
 ];
 router.patch(
   "/password/change",
+  rateLimiter.sensitiveLimiter,
   authorization.AdminAuthorization,
   localValidationFunction.validateBodyProperties(
     updatePasswordProperties,
@@ -39,7 +42,7 @@ router.patch(
 );
 
 // @route   patch api/owner/
-// @desc    update owner's password
+// @desc    update owner's data ["fullName", "email"]
 // @access  Private
 const updateOwnerProperties = ["fullName", "email"];
 router.put(

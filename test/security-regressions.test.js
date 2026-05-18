@@ -41,3 +41,128 @@ test("promo expiration validation must compare timestamps correctly", () => {
     true
   );
 });
+
+test("controllers must not leak raw error objects to client", () => {
+  const controllerFiles = [
+    "AccountsController.js",
+    "accountsActivationController.js",
+    "currencyController.js",
+    "employeeController.js",
+    "hotelController.js",
+    "ownerController.js",
+    "promoCodeController.js",
+    "roleController.js",
+    "ticketsController.js",
+  ];
+  for (const file of controllerFiles) {
+    const content = fs.readFileSync(
+      path.join(root, "controllers", file),
+      "utf8"
+    );
+    // Should not send raw error to client in catch blocks
+    const lines = content.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      // Check for patterns like `error, error}` or `{ message: error }` or `{ msg: ... error }`
+      if (
+        line.includes("send({ message: error") ||
+        line.includes("send({ msg: `Internal Server Error`, error") ||
+        line.includes("send({ message: error,")
+      ) {
+        assert.fail(`${file}:${i + 1} leaks error object: ${line.trim()}`);
+      }
+    }
+  }
+});
+
+test("app.js must use mongoSanitize middleware", () => {
+  const appFile = fs.readFileSync(
+    path.join(root, "app.js"),
+    "utf8"
+  );
+  assert.equal(appFile.includes("mongoSanitize"), true);
+  assert.equal(appFile.includes('import mongoSanitize'), true);
+  assert.equal(appFile.includes("app.use(mongoSanitize()"), true);
+});
+
+test("app.js must have trust proxy enabled", () => {
+  const appFile = fs.readFileSync(
+    path.join(root, "app.js"),
+    "utf8"
+  );
+  assert.equal(appFile.includes('app.set("trust proxy", 1)'), true);
+});
+
+test("controllers must not pass req.body directly to find/findOne/findByIdAndUpdate", () => {
+  const filesToCheck = [
+    { path: path.join(root, "controllers", "roleController.js"), name: "roleController" },
+    { path: path.join(root, "controllers", "currencyController.js"), name: "currencyController" },
+  ];
+  for (const { path: filePath, name } of filesToCheck) {
+    const content = fs.readFileSync(filePath, "utf8");
+    const lines = content.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      // Check for patterns like RoleServes.getRole(data) where data = req.body
+      if (
+        (line.includes("= req.body") && line.includes("let data") || line.includes("const data = req.body")) &&
+        !line.includes("const {") &&
+        !line.includes("{ ")
+      ) {
+        assert.fail(`${name}.js:${i + 1} passes req.body directly: ${line.trim()}`);
+      }
+    }
+  }
+});
+
+test("promoCodeController must destructure req.body in addPromoCode", () => {
+  const content = fs.readFileSync(
+    path.join(root, "controllers", "promoCodeController.js"),
+    "utf8"
+  );
+  assert.equal(content.includes("const { code, expirationDate, forAllHotels"), true);
+  assert.equal(content.includes("const newPromoCode = new PromoCode(req.body)"), false);
+});
+
+test("employeeController must destructure req.body in addEmployee", () => {
+  const content = fs.readFileSync(
+    path.join(root, "controllers", "employeeController.js"),
+    "utf8"
+  );
+  assert.equal(content.includes("const { fullName, email, password, role } = req.body"), true);
+  assert.equal(content.includes("employeeService.addEmployee(req.body)"), false);
+});
+
+test("hotelController must not contain buildSafeFilter", () => {
+  const content = fs.readFileSync(
+    path.join(root, "controllers", "hotelController.js"),
+    "utf8"
+  );
+  assert.equal(content.includes("buildSafeFilter"), false);
+});
+
+test("image deletion validator must reject path traversal", () => {
+  const content = fs.readFileSync(
+    path.join(root, "validator", "hotelValidator.js"),
+    "utf8"
+  );
+  assert.equal(content.includes("matches(/^[a-zA-Z0-9_-]+$/)"), true);
+  assert.equal(content.includes("matches(/^[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9]+)?$/)"), true);
+});
+
+test("activation middleware must set req.auth", () => {
+  const content = fs.readFileSync(
+    path.join(root, "middleware", "authorization.js"),
+    "utf8"
+  );
+  assert.equal(content.includes("req.auth = { userId: user.id }"), true);
+});
+
+test("global error handler must exist in app.js", () => {
+  const content = fs.readFileSync(
+    path.join(root, "app.js"),
+    "utf8"
+  );
+  assert.equal(content.includes("app.use((err, req, res, next) =>"), true);
+  assert.equal(content.includes('res.status(500).send({ message: "Internal server error" })'), true);
+});

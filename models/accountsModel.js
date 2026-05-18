@@ -13,6 +13,7 @@ const accountsSchema = new Schema(
       type: String,
       required: true,
       minlength: [8, "password is too short"],
+      select: false,
     },
     whenPasswordChanged: Date,
     role: { type: Schema.Types.ObjectId, ref: "Role", required: true },

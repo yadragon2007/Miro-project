@@ -1,16 +1,5 @@
 import Hotels from "../models/hotelModel.js";
 
-const buildSafeFilter = (query, allowedKeys) => {
-  const safeFilter = {};
-  for (const key of allowedKeys) {
-    const value = query[key];
-    if (value === undefined) continue;
-    if (typeof value === "string" && value.includes("$")) continue;
-    safeFilter[key] = value;
-  }
-  return safeFilter;
-};
-
 // @route   POST api/hotel/
 // @desc    Add hotel
 // @access  Private
@@ -30,7 +19,10 @@ const addHotel_post = async (req, res) => {
 // @desc    Get all hotels
 // @access  Private
 const getAllHotels_get = async (req, res) => {
-  const filter = buildSafeFilter(req.query, ["name", "stars", "currency"]);
+  const filter = {};
+  for (const key of ["name", "stars", "currency"]) {
+    if (req.query[key] !== undefined) filter[key] = req.query[key];
+  }
   const hotels = await Hotels.find(filter);
   res.status(200).send(hotels);
 };
@@ -94,14 +86,12 @@ const addImages_patch = async (req, res) => {
   const { hotelid } = req.headers;
   // save images name in data base
   const hotel = await Hotels.findById(hotelid);
-  // const newImages = [...hotel.images, ...images];
   let newImages = hotel.images;
   Object.keys(images).forEach((folder) => {
     if (newImages[folder])
       newImages[folder] = [...newImages[folder], ...images[folder]];
     else newImages[folder] = images[folder];
   });
-  console.log(newImages);
 
   // upload data
   await Hotels.findByIdAndUpdate(hotelid, { images: newImages });

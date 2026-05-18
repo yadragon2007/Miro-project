@@ -6,12 +6,14 @@ import userValidator from "../validator/userValidator.js";
 import authorization from "../middleware/authorization.js";
 import localValidationFunction from "../validator/localValidationFunction.js";
 import authentication from "../middleware/authentication.js";
+import rateLimiter from "../middleware/rateLimiter.js";
 
 // @route   PSOT api/accounts/
 // @desc    Create an user
 // @access  Public
 router.post(
   "/",
+  rateLimiter.accountCreateLimiter,
   userValidator.validateSignup,
   localValidationFunction.errorHandler,
   accounts.add_account_post
@@ -23,6 +25,7 @@ router.post(
 
 router.post(
   "/login",
+  rateLimiter.authLimiter,
   userValidator.validateLogin,
   localValidationFunction.errorHandler,
   authentication.userAuthentication,
@@ -63,6 +66,7 @@ router.patch(
 
 router.patch(
   "/changePassword/",
+  rateLimiter.sensitiveLimiter,
   authorization.UserAuthorization,
   userValidator.changePassword,
   localValidationFunction.errorHandler,

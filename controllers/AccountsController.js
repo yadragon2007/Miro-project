@@ -18,10 +18,11 @@ const sanitizeAccount = (account) => ({
 // @access  Public
 const add_account_post = async (req, res) => {
   try {
-    const data = req.body;
+    const { fullName, email, password, location } = req.body;
+    const data = { fullName, email, location };
     // hash the password
     let salt = await bcrypt.genSalt(10);
-    let hashedPassword = await bcrypt.hash(data.password, salt);
+    let hashedPassword = await bcrypt.hash(password, salt);
     data.password = hashedPassword;
     // get user role
     const { roleId } = await RoleServes.getRole({ roleName: "user" });
@@ -37,7 +38,8 @@ const add_account_post = async (req, res) => {
     req.session.Token = Token;
     res.status(201).send({ data: sanitizeAccount(newAccount), Token });
   } catch (error) {
-    res.status(500).send({ message: error });
+    console.error(error);
+    res.status(500).send({ message: "Internal server error" });
   }
 };
 
@@ -58,7 +60,8 @@ const login_post = async (req, res) => {
 
     res.status(200).send({ data: sanitizeAccount(account), Token });
   } catch (error) {
-    res.status(500).send({ message: error });
+    console.error(error);
+    res.status(500).send({ message: "Internal server error" });
   }
 };
 
@@ -97,6 +100,7 @@ const updateAccountPassword_admin_patch = async (req, res) => {
     const currentUser = await accountService.getAccountById(id);
     return res.status(200).send(sanitizeAccount(currentUser));
   } catch (error) {
+    console.error(error);
     return res.status(400).json({ message: error.message });
   }
 };
@@ -110,7 +114,7 @@ const updateAccountPassword_user_patch = async (req, res) => {
   if (newPassword !== confirmPassword)
     return res.status(400).send("Those passwords didn’t match. Try again.");
 
-  const user = await accountService.getAccountById(userId);
+  const user = await accountService.getAccountById(userId, "+password");
 
   const checkPassword = await bcrypt.compare(oldPassword, user.password);
   if (!checkPassword) return res.status(400).send("Password is fales");
@@ -141,7 +145,8 @@ const updatedUser_put = async (req, res) => {
       data: sanitizeAccount(user),
     });
   } catch (error) {
-    res.status(500).send({ message: error.message });
+    console.error(error);
+    res.status(500).send({ message: "Internal server error" });
   }
 };
 
@@ -154,7 +159,8 @@ const delete_user = async (req, res) => {
     await accountService.deleteAccount(userId);
     return res.status(200).send("account removed");
   } catch (error) {
-    res.status(500).send({ message: error });
+    console.error(error);
+    res.status(500).send({ message: "Internal server error" });
   }
 };
 

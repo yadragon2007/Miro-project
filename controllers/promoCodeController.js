@@ -1,39 +1,35 @@
 import PromoCode from "../models/promoCodeModel.js";
 
-const buildSafeFilter = (query, allowedKeys) => {
-  const safeFilter = {};
-  for (const key of allowedKeys) {
-    const value = query[key];
-    if (value === undefined) continue;
-    if (typeof value === "string" && value.includes("$")) continue;
-    safeFilter[key] = value;
-  }
-  return safeFilter;
-};
-
 const addPromoCode_post = async (req, res) => {
   try {
-    const newPromoCode = new PromoCode(req.body);
+    const { code, expirationDate, forAllHotels, Hotels, forAllUsers, users, usedOneTimeOfUser, offer, infintyTimesToUse, howManyToUse } = req.body;
+    const data = { code, expirationDate, forAllHotels, Hotels, forAllUsers, users, usedOneTimeOfUser, offer, infintyTimesToUse, howManyToUse };
+    const newPromoCode = new PromoCode(data);
     await newPromoCode.save();
     return res.status(201).send({
       msg: "promoCode add successfully",
       data: newPromoCode,
     });
   } catch (error) {
-    res.status(500).send({ msg: "server error", error });
+    console.error(error);
+    res.status(500).send({ msg: "server error" });
   }
 };
 
 const getAllPromoCode_get = async (req, res) => {
   try {
-    const filter = buildSafeFilter(req.query, ["code", "forAllHotels", "forAllUsers"]);
+    const filter = {};
+    for (const key of ["code", "forAllHotels", "forAllUsers"]) {
+      if (req.query[key] !== undefined) filter[key] = req.query[key];
+    }
     const allPromoCodes = await PromoCode.find(filter);
     return res.status(200).send({
       msg: "promoCodes have been got successfully",
       data: allPromoCodes,
     });
   } catch (error) {
-    res.status(500).send({ msg: "server error", error });
+    console.error(error);
+    res.status(500).send({ msg: "server error" });
   }
 };
 
@@ -48,14 +44,18 @@ const getPromoCode_post = async (req, res) => {
       data: promoCode,
     });
   } catch (error) {
-    res.status(500).send({ msg: "server error", error });
+    console.error(error);
+    res.status(500).send({ msg: "server error" });
   }
 };
 
 const updatePromoCode_put = async (req, res) => {
   const { promoCodeId } = req.body;
-  let data = req.body;
-  delete data.promoCodeId;
+  const allowedFields = ["expirationDate", "forAllHotels", "acceptedHotels", "forAllUsers", "users", "usedOneTimeOfUser", "offer", "infintyTimesToUse", "howManyToUse"];
+  const data = {};
+  for (const key of allowedFields) {
+    if (req.body[key] !== undefined) data[key] = req.body[key];
+  }
   try {
     await PromoCode.findByIdAndUpdate(promoCodeId, data);
     const newPromoCode = await PromoCode.findById(promoCodeId);
@@ -65,7 +65,8 @@ const updatePromoCode_put = async (req, res) => {
       data: newPromoCode,
     });
   } catch (error) {
-    res.status(500).send({ msg: "server error", error });
+    console.error(error);
+    res.status(500).send({ msg: "server error" });
   }
 };
 
@@ -78,7 +79,8 @@ const deletePromoCode_delete = async (req, res) => {
       msg: "promoCode deleted successfully",
     });
   } catch (error) {
-    res.status(500).send({ msg: "server error", error });
+    console.error(error);
+    res.status(500).send({ msg: "server error" });
   }
 };
 

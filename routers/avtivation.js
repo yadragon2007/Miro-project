@@ -3,12 +3,14 @@ const router = Router();
 
 import activation from "../controllers/accountsActivationController.js";
 import authorization from "../middleware/authorization.js";
+import rateLimiter from "../middleware/rateLimiter.js";
 
 // @route   POST api/activation/
 // @desc    Send activation url
 // @access  Public
 router.post(
   "/",
+  rateLimiter.sensitiveLimiter,
   authorization.UserAuthorization,
   activation.account_activation_post
 );

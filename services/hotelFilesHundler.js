@@ -70,6 +70,7 @@ const destination = async (req, file, cb) => {
   // get hotel data
   const { hotelid: id } = req.headers;
   const hotel = await Hotels.findById(id);
+  req.hotelIdForFileName = hotel._id;
   // make hotel img folder
   const folderPath = buildUploadsPath(id, "images", file.fieldname);
   //create folder
@@ -86,9 +87,6 @@ const filename = async (req, file, cb) => {
   if (!acceptedMimeTypes.has(file.mimetype)) {
     return cb(new Error(`File type not allowed "${file.mimetype}"`), false);
   }
-
-  const { hotelid: id } = req.headers;
-  const hotel = await Hotels.findById(id);
 
   // check file extension
   const acceptedExtensions = [
@@ -111,7 +109,7 @@ const filename = async (req, file, cb) => {
   // file name handling
   const uniqueSuffix = Date.now();
   const fileName =
-    hotel._id +
+    req.hotelIdForFileName +
     "-" +
     file.fieldname +
     "-" +
@@ -121,7 +119,6 @@ const filename = async (req, file, cb) => {
   // add file to req.body
   const folderName = file.fieldname;
   if (req.body.images) {
-    // req.body.images.push({ imageName: fileName, imageFolder: file.fieldname });
     if (req.body.images[folderName]) req.body.images[folderName].push(fileName);
     else {
       req.body.images[folderName] = [];
@@ -129,7 +126,6 @@ const filename = async (req, file, cb) => {
     }
   } else {
     req.body.images = {};
-    // req.body.images.push({ imageName: fileName, imageFolder: file.fieldname });
     if (req.body.images[folderName]) req.body.images[folderName].push(fileName);
     else {
       req.body.images[folderName] = [];
@@ -156,17 +152,19 @@ const deleteHotelImages = async (req, res, next) => {
   const { hotelId, deletedImages } = req.body;
   const hotel = await Hotels.findById(hotelId);
 
-  // delete images files
   // get path
   const folderPath = buildUploadsPath(hotelId, "images");
 
   deletedImages.forEach((deletedImage) => {
-    const imagePath = path.join(
-      folderPath,
-      `${deletedImage.imageFolder}/${deletedImage.imageName}`
-    );
-    if (fs.existsSync(imagePath)) {
-      fs.unlinkSync(imagePath);
+    const folder = path.basename(deletedImage.imageFolder);
+    const name = path.basename(deletedImage.imageName);
+    const imagePath = path.join(folderPath, folder, name);
+    const resolved = path.resolve(imagePath);
+    if (!resolved.startsWith(path.resolve(folderPath))) {
+      return console.log(`Invalid image path rejected: ${imagePath}`);
+    }
+    if (fs.existsSync(resolved)) {
+      fs.unlinkSync(resolved);
     }
   });
 

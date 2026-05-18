@@ -4,7 +4,7 @@ const Schema = _Schema;
 const ownerSchema = new Schema({
   fullName: { type: String, required: true },
   email: { type: String, unique: true, required: true },
-  password: { type: String, required: true },
+  password: { type: String, required: true, select: false },
   role: { type: Schema.Types.ObjectId, ref: "Role", required: true },
   default: { type: Boolean },
   whenPasswordChanged: { type: Date, default: new Date() },

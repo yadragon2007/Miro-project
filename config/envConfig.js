@@ -28,6 +28,9 @@ export default {
   sessionSecret: requireEnv("SESSION_SECRET"),
   dbUri: requireEnv("MONGODB_URI"),
   port: process.env.PORT || "8080",
+  allowedOrigins: process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
+    : ["http://localhost:8080"],
   Owner: {
     email: requireEnv("OWNER_ACCOUNT_EMAIL"),
     password: requireEnv("OWNER_ACCOUNT_PASSWORD"),

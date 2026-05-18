@@ -1,17 +1,6 @@
 import Currency from "../models/currencyModel.js";
 import currencyService from "../services/currencyService.js";
 
-const buildSafeFilter = (query, allowedKeys) => {
-  const safeFilter = {};
-  for (const key of allowedKeys) {
-    const value = query[key];
-    if (value === undefined) continue;
-    if (typeof value === "string" && value.includes("$")) continue;
-    safeFilter[key] = value;
-  }
-  return safeFilter;
-};
-
 // @route   POST api/currency/
 // @desc    add currency
 // @access  Private
@@ -30,7 +19,8 @@ const addCurrency_post = async (req, res) => {
       .status(201)
       .send({ msg: `currency added succefully`, data: currency });
   } catch (error) {
-    return res.status(500).send({ msg: `Internal Server Error`, error });
+    console.error(error);
+    return res.status(500).send({ msg: `Internal Server Error` });
   }
 };
 
@@ -47,7 +37,8 @@ const getSpecificCurrency_post = async (req, res) => {
 
     return res.status(200).send({ data: currency });
   } catch (error) {
-    return res.status(500).send({ msg: `Internal Server Error`, error });
+    console.error(error);
+    return res.status(500).send({ msg: `Internal Server Error` });
   }
 };
 
@@ -56,12 +47,16 @@ const getSpecificCurrency_post = async (req, res) => {
 // @access  Private
 const getAllCurrencies_get = async (req, res) => {
   try {
-    const filter = buildSafeFilter(req.query, ["currencyCode", "symbol"]);
+    const filter = {};
+    for (const key of ["currencyCode", "symbol"]) {
+      if (req.query[key] !== undefined) filter[key] = req.query[key];
+    }
     const allCurrencies = await Currency.find(filter);
 
     return res.status(200).send({ data: allCurrencies });
   } catch (error) {
-    return res.status(500).send({ msg: `Internal Server Error`, error });
+    console.error(error);
+    return res.status(500).send({ msg: `Internal Server Error` });
   }
 };
 
@@ -70,16 +65,20 @@ const getAllCurrencies_get = async (req, res) => {
 // @access  Private
 const updateAllCurrencies_put = async (req, res) => {
   try {
-    const { currencyId: id } = req.body;
-    let data = req.body;
-    delete data.currencyId;
+    const { currencyId: id, currencyCode, symbol, thousands_separator, decimal_separator } = req.body;
+    const data = {};
+    if (currencyCode !== undefined) data.currencyCode = currencyCode;
+    if (symbol !== undefined) data.symbol = symbol;
+    if (thousands_separator !== undefined) data.thousands_separator = thousands_separator;
+    if (decimal_separator !== undefined) data.decimal_separator = decimal_separator;
 
     await Currency.findByIdAndUpdate(id, data);
     const newCurrency = await Currency.findById(id);
 
     return res.status(200).send({ data: newCurrency });
   } catch (error) {
-    return res.status(500).send({ msg: `Internal Server Error`, error });
+    console.error(error);
+    return res.status(500).send({ msg: `Internal Server Error` });
   }
 };
 
@@ -94,7 +93,8 @@ const deleteCurrency_delete = async (req, res) => {
 
     return res.status(200).send({ msg: "currency deleted succefully" });
   } catch (error) {
-    return res.status(500).send({ msg: `Internal Server Error`, error });
+    console.error(error);
+    return res.status(500).send({ msg: `Internal Server Error` });
   }
 };
 
@@ -110,7 +110,8 @@ const getAllCurrenciesCode_get = async (req, res) => {
       .status(200)
       .send({ supportedCodes: supportedCurrencyCodes.data });
   } catch (error) {
-    return res.status(500).send({ msg: `Internal Server Error`, error });
+    console.error(error);
+    return res.status(500).send({ msg: `Internal Server Error` });
   }
 };
 
@@ -129,7 +130,8 @@ const conversionCurrency_get = async (req, res) => {
       .status(200)
       .send({ conversionCurrency: conversionCurrency.data });
   } catch (error) {
-    return res.status(500).send({ msg: `Internal Server Error`, error });
+    console.error(error);
+    return res.status(500).send({ msg: `Internal Server Error` });
   }
 };
 

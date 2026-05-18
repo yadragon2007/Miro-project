@@ -6,6 +6,7 @@ import employeeValidator from "../validator/employeeValidator.js";
 import employeeController from "../controllers/employeeController.js";
 import localValidationFunction from "../validator/localValidationFunction.js";
 import authentication from "../middleware/authentication.js";
+import rateLimiter from "../middleware/rateLimiter.js";
 
 // @route   POST api/employee/
 // @desc    Add employee
@@ -24,6 +25,7 @@ router.post(
 // @access  
 router.post(
   "/login",
+  rateLimiter.authLimiter,
   employeeValidator.employeeLogin,
   localValidationFunction.errorHandler,
   authentication.employeeAuthentication,

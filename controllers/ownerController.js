@@ -30,7 +30,8 @@ const ownerlogin_post = async (req, res) => {
       Token,
     });
   } catch (error) {
-    return res.status(500).send({ msg: `Internal Server Error`, error });
+    console.error(error);
+    return res.status(500).send({ msg: `Internal Server Error` });
   }
 };
 
@@ -56,21 +57,26 @@ const changeOwnerPassword_patch = async (req, res) => {
     // response
     return res.status(200).send({ msg: "password changed successfully" });
   } catch (error) {
-    return res.status(500).send({ msg: `Internal Server Error`, error });
+    console.error(error);
+    return res.status(500).send({ msg: `Internal Server Error` });
   }
 };
 
 const updateOwner_put = async (req, res) => {
   try {
     const ownerId = req.auth.adminId;
-    let data = req.body;
+    const { fullName, email } = req.body;
+    const data = {};
+    if (fullName !== undefined) data.fullName = fullName;
+    if (email !== undefined) data.email = email;
     const owner = await ownerService.updateOwner(ownerId, data);
     // response
     return res
       .status(200)
       .send({ msg: "owner updated successfully successfully", data: owner });
   } catch (error) {
-    return res.status(500).send({ msg: `Internal Server Error`, error });
+    console.error(error);
+    return res.status(500).send({ msg: `Internal Server Error` });
   }
 };
 
@@ -88,7 +94,8 @@ const ownerRest_delete = async (req, res) => {
     // response
     return res.status(200).send({ msg: "owner deleted successfully" });
   } catch (error) {
-    return res.status(500).send({ msg: `Internal Server Error`, error });
+    console.error(error);
+    return res.status(500).send({ msg: `Internal Server Error` });
   }
 };
 

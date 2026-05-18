@@ -183,6 +183,7 @@ const activation = async (req, res, next) => {
         });
       }
     }
+    req.auth = { userId: user.id };
     return next();
   } catch (error) {
     res
