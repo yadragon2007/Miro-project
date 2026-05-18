@@ -158,11 +158,53 @@ test("activation middleware must set req.auth", () => {
   assert.equal(content.includes("req.auth = { userId: user.id }"), true);
 });
 
-test("global error handler must exist in app.js", () => {
+test("global error handler must be imported and used in app.js", () => {
   const content = fs.readFileSync(
     path.join(root, "app.js"),
     "utf8"
   );
-  assert.equal(content.includes("app.use((err, req, res, next) =>"), true);
-  assert.equal(content.includes('res.status(500).send({ message: "Internal server error" })'), true);
+  assert.equal(content.includes("import errorHandler from"), true);
+  assert.equal(content.includes("app.use(errorHandler)"), true);
+  assert.equal(content.includes("app.use((err, req, res, next) =>"), false);
+});
+
+test("404 handler must return JSON with code string", () => {
+  const content = fs.readFileSync(
+    path.join(root, "app.js"),
+    "utf8"
+  );
+  assert.equal(content.includes(".json({ status: \"fail\", message: \"Route not found\", code: \"0006\" })"), true);
+  assert.equal(content.includes(".send(\"not found 404\")"), false);
+});
+
+test("AppError class must format code as 4-digit string", () => {
+  const content = fs.readFileSync(
+    path.join(root, "utils", "AppError.js"),
+    "utf8"
+  );
+  assert.equal(content.includes("constructor(message, statusCode, code = \"0000\")"), true);
+  assert.equal(content.includes("this.code = String(code).padStart(4, \"0\")"), true);
+});
+
+test("error response must include 4-digit code string in errorHandler", () => {
+  const content = fs.readFileSync(
+    path.join(root, "middleware", "errorHandler.js"),
+    "utf8"
+  );
+  assert.equal(content.includes('const response = { status, message, code }'), true);
+  assert.equal(content.includes('|| "0000"'), true);
+  assert.equal(content.includes('= "0001"'), true);
+  assert.equal(content.includes('= "0002"'), true);
+  assert.equal(content.includes('= "0003"'), true);
+  assert.equal(content.includes('= "0004"'), true);
+  assert.equal(content.includes('= "0005"'), true);
+});
+
+test("authorization middleware must not have try/catch blocks", () => {
+  const content = fs.readFileSync(
+    path.join(root, "middleware", "authorization.js"),
+    "utf8"
+  );
+  assert.equal(content.includes("try {"), false);
+  assert.equal(content.includes("} catch"), false);
 });

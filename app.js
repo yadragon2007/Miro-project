@@ -56,17 +56,6 @@ app.use(
   }),
 );
 
-/*====================== default data =======================*/
-// check Owner Role
-import ownerRoleCreation from "./middleware/ownerRoleCreation.js";
-app.use(ownerRoleCreation.checkOwnerRole);
-// check Owner account
-import ownerAccountCreation from "./middleware/defaultOwnerAccount.js";
-app.use(ownerAccountCreation.checkOwnerAccount);
-// check User Role
-import userRoleCreation from "./middleware/userRoleCreation.js";
-app.use(userRoleCreation.checkUserRole);
-
 /*====================== routes =======================*/
 import accounts from "./routers/Accounts.js";
 import activation from "./routers/avtivation.js";
@@ -87,16 +76,15 @@ app.use("/api/owner", owner);
 app.use("/api/role", role);
 app.use("/api/employee", employee);
 app.use("/api/ticket/", tickets);
+
 // 404
 app.use((req, res) => {
-  res.status(404).send("not found 404");
+  res.status(404).json({ status: "fail", message: "Route not found", code: "0006" });
 });
 
 // Global error handler
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).send({ message: "Internal server error" });
-});
+import errorHandler from "./middleware/errorHandler.js";
+app.use(errorHandler);
 
 /*====================== listening =======================*/
 const port = envConfig.port || 8080;

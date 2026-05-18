@@ -3,6 +3,7 @@ import Role from "../models/roleModel.js";
 import Accounts from "../models/accountsModel.js";
 import Hotels from "../models/hotelModel.js";
 import PromoCode from "../models/promoCodeModel.js";
+import AppError from "../utils/AppError.js";
 
 const bookTicket = [
   body("hotelId")
@@ -37,14 +38,11 @@ const bookTicket = [
       const promoCode = await PromoCode.findOne({ code });
       const { hotelId } = req.body;
       const userId = req.auth.userId;
-      // check if promoCode is exist
       if (!promoCode)
         return Promise.reject(new Error("this code is not exist"));
-      // check if promoCode is not expired
       const date = new Date();
       if (promoCode.expirationDate.getTime() < date.getTime())
         return Promise.reject(new Error("this promoCode is expired"));
-      // check if hotel can access this promoCode
       if (promoCode.forAllHotels === false) {
         const hotel = promoCode.Hotels.find((id) => id == hotelId);
         if (!hotel)
@@ -52,20 +50,17 @@ const bookTicket = [
             new Error(`this promoCode is unavilable to this hotle ${hotelId}`)
           );
       }
-      //check if itis first time to use this promo code
       if (promoCode.usedOneTimeOfUser == true) {
         const user = promoCode.userWhoUsed.find((id) => id == userId);
         if (user)
           return Promise.reject(new Error(`you already used this promoCode`));
       }
-      // check promoCode limt
       if (promoCode.infintyTimesToUse === false) {
         if (promoCode.howManyToUse <= 0)
           return Promise.reject(
             new Error(`this promoCode unavilable at this time`)
           );
       }
-      // check if user has the permission to use this PromoCode
       if (promoCode.forAllUsers == false) {
         const user = promoCode.users.find((id) => id == userId);
         if (!user)
@@ -131,7 +126,6 @@ const bookTicket = [
 
 const dateCheck = (req, res, next) => {
   const date = new Date();
-  // check In Date
   const checkInDate = new Date();
   const {
     year: checkInYear,
@@ -139,7 +133,6 @@ const dateCheck = (req, res, next) => {
     day: checkInDay,
   } = req.body.checkInDate;
   checkInDate.setFullYear(checkInYear, checkInMonth - 1, checkInDay);
-  // check Out Date
   const checkOutDate = new Date();
   const {
     year: checkOutYear,
@@ -147,17 +140,19 @@ const dateCheck = (req, res, next) => {
     day: checkOutDay,
   } = req.body.checkOutDate;
   checkOutDate.setFullYear(checkOutYear, checkOutMonth - 1, checkOutDay);
-  // check if check In Date is after current date
   if (date.getTime() > checkInDate.getTime()) {
-    res.status(422).send({
-      msg: `check in date must be after ${date.toLocaleDateString()}`,
-    });
+    throw new AppError(
+      `check in date must be after ${date.toLocaleDateString()}`,
+      422,
+      1203,
+    );
   } else {
-    // check if check out date after check in date
     if (checkInDate.getTime() >= checkOutDate.getTime()) {
-      res.status(422).send({
-        msg: `check out date must be after ${checkInDate.toLocaleDateString()}`,
-      });
+      throw new AppError(
+        `check out date must be after ${checkInDate.toLocaleDateString()}`,
+        422,
+        1204,
+      );
     } else {
       next();
     }

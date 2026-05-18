@@ -4,6 +4,7 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import Hotels from "../models/hotelModel.js";
+import AppError from "../utils/AppError.js";
 
 const acceptedMimeTypes = new Set([
   "image/png",
@@ -19,7 +20,6 @@ const buildUploadsPath = (...parts) => {
   return path.resolve(__dirname, "..", "public", "uploads", "hotels", ...parts);
 };
 
-// add hotel folder
 const addHotelFolder = async (req, res, next) => {
   try {
     const hotel = new Hotels({
@@ -28,58 +28,42 @@ const addHotelFolder = async (req, res, next) => {
     });
     req.body.hotel = hotel;
     const id = hotel._id.toString();
-    // make hotel folder path
     const folderPath = buildUploadsPath(id);
-    //create hotel folder
     fs.mkdir(folderPath, { recursive: true }, (err) => {
       if (err) {
         return console.log(`Error creating folder: ${err.message}`);
       }
     });
-    // create images folder
     const imagesFolder = path.join(folderPath, "images");
     fs.mkdir(imagesFolder, { recursive: true }, (err) => {
       if (err) {
         return console.log(`Error creating folder: ${err.message}`);
       }
     });
-
-    // the end
     next();
   } catch (error) {
-    res.status(500).send({ error: error.message });
+    next(new AppError("Failed to create hotel folders", 500, 501));
   }
 };
 
-// delete hotel folder
 const deleteHotelFolder = async (req, res, next) => {
   const { id } = req.headers;
   const hotel = await Hotels.findById(id);
-
-  // make hotel img folder
   const folderPath = buildUploadsPath(id);
-  // delete folder
   fs.rmSync(folderPath, { recursive: true, force: true });
-
   next();
 };
 
-// add hotel images
-
 const destination = async (req, file, cb) => {
-  // get hotel data
   const { hotelid: id } = req.headers;
   const hotel = await Hotels.findById(id);
   req.hotelIdForFileName = hotel._id;
-  // make hotel img folder
   const folderPath = buildUploadsPath(id, "images", file.fieldname);
-  //create folder
   fs.mkdir(folderPath, { recursive: true }, (err) => {
     if (err) {
       return console.log(`Error creating folder: ${err.message}`);
     }
   });
-  // select folder
   cb(null, folderPath);
 };
 
@@ -88,14 +72,8 @@ const filename = async (req, file, cb) => {
     return cb(new Error(`File type not allowed "${file.mimetype}"`), false);
   }
 
-  // check file extension
   const acceptedExtensions = [
-    ".png",
-    ".jpg",
-    ".jpeg",
-    ".jfif",
-    ".pjpeg",
-    ".pjp",
+    ".png", ".jpg", ".jpeg", ".jfif", ".pjpeg", ".pjp",
   ];
   const extension = path.extname(file.originalname);
   const check = acceptedExtensions.includes(extension);
@@ -106,7 +84,6 @@ const filename = async (req, file, cb) => {
     );
   }
 
-  // file name handling
   const uniqueSuffix = Date.now();
   const fileName =
     req.hotelIdForFileName +
@@ -116,7 +93,6 @@ const filename = async (req, file, cb) => {
     uniqueSuffix +
     path.extname(file.originalname);
 
-  // add file to req.body
   const folderName = file.fieldname;
   if (req.body.images) {
     if (req.body.images[folderName]) req.body.images[folderName].push(fileName);
@@ -132,7 +108,6 @@ const filename = async (req, file, cb) => {
       req.body.images[folderName].push(fileName);
     }
   }
-  // save file
   cb(null, fileName);
 };
 
@@ -146,13 +121,9 @@ const uploadConfig = multer({
   limits: { fileSize: 5 * 1024 * 1024 },
 });
 
-// delete hotel images
-
 const deleteHotelImages = async (req, res, next) => {
   const { hotelId, deletedImages } = req.body;
   const hotel = await Hotels.findById(hotelId);
-
-  // get path
   const folderPath = buildUploadsPath(hotelId, "images");
 
   deletedImages.forEach((deletedImage) => {

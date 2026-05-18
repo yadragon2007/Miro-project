@@ -3,194 +3,121 @@ import jwt from "jsonwebtoken";
 import envConfig from "../config/envConfig.js";
 import Employee from "../models/employeeModel.js";
 import Owner from "../models/ownersModel.js";
-const APIusers = {
-  Accounts,
-  Employee,
-  Owner,
-};
-const AdminAuthorization = async (req, res, next) => {
+import asyncHandler from "../utils/asyncHandler.js";
+import AppError from "../utils/AppError.js";
+
+const APIusers = { Accounts, Employee, Owner };
+
+const AdminAuthorization = asyncHandler(async (req, res, next) => {
   const { authorization } = req.headers;
 
-  if (!authorization || !authorization.startsWith("Bearer")) {
-    return res.status(403).json({
-      type: "authorization",
-      code: "00",
-      message: "Missing authorization header",
-    });
-  } else {
-    try {
-      const token = authorization.split(" ")[1]; //retrieve the token part only
-      // verify Token
-      const decoded = jwt.verify(token, envConfig.JWT.secret);
-      // check admin title
-      if (decoded.title !== "Owner" && decoded.title !== "Employee")
-        return res.status(403).send({
-          type: "authorization",
-          code: "01",
-          message: "user not authorized",
-        });
-      // get admin title
-      const title = decoded.title;
-      // check if user is exists
-      const user = await APIusers[title].findById(decoded._id).populate("role");
-      if (!user)
-        return res.status(403).send({
-          type: "authorization",
-          code: "02",
-          message: "user is not exists",
-        });
+  if (!authorization || !authorization.startsWith("Bearer"))
+    throw new AppError("Missing authorization header", 403, 200);
 
-      // check if password has not changed after creating the Token
-      if (user.whenPasswordChanged) {
-        const currentTimeStamp = parseInt(
-          user.whenPasswordChanged.getTime() / 1000
-        );
+  const token = authorization.split(" ")[1];
+  const decoded = jwt.verify(token, envConfig.JWT.secret);
 
-        if (currentTimeStamp > decoded.iat) {
-          return res.status(403).send({
-            type: "authorization",
-            code: "03",
-            message:
-              "password had been changed after the Token created.login again",
-          });
-        }
-      }
-      // Check User Role
-      const role = user.role;
+  if (decoded.title !== "Owner" && decoded.title !== "Employee")
+    throw new AppError("user not authorized", 403, 201);
 
-      if (role.fullAccess) {
-        req.auth = { adminId: user._id.toString(), title };
-        return next();
-      } else {
-        const permissions = Array.isArray(role.permissions) ? role.permissions : [];
-        const hasPermission = permissions.includes(req.baseUrl);
-        if (!hasPermission) {
-          return res.status(403).send({
-            type: "authorization",
-            code: "04",
-            message: "user does not have the permission to use this url",
-          });
-        } else {
-          req.auth = { adminId: user._id.toString(), title };
-          return next();
-        }
-      }
+  const title = decoded.title;
+  const user = await APIusers[title].findById(decoded._id).populate("role");
 
-      // server error
-      return res.status(500).send({ type: "server error", code: "05" });
-    } catch (error) {
-      res
-        .status(403)
-        .send({ type: "authorization", code: "06", message: error.message });
-    }
-  }
-};
+  if (!user)
+    throw new AppError("user is not exists", 403, 202);
 
-const UserAuthorization = async (req, res, next) => {
-  const { authorization } = req.headers;
-
-  if (!authorization || !authorization.startsWith("Bearer")) {
-    return res.status(401).json({
-      type: "authorization",
-      code: "00",
-      message: "Missing authorization header",
-    });
-  } else {
-    try {
-      const token = authorization.split(" ")[1]; //retrieve the token part only
-      // verify Token
-      const decoded = jwt.verify(token, envConfig.JWT.secret);
-      // check if user is exists
-      const user = await Accounts.findById(decoded.id);
-      if (!user)
-        return res.status(401).send({
-          type: "authorization",
-          code: "01",
-          message: "user is not exists",
-        });
-      // check if password has not changed after creating the Token
-      if (user.whenPasswordChanged) {
-        const currentTimeStamp = parseInt(
-          user.whenPasswordChanged.getTime() / 1000
-        );
-
-        if (currentTimeStamp > decoded.iat) {
-          return res.status(403).send({
-            type: "authorization",
-            code: "04",
-            message:
-              "password had been changed after the Token created.login again",
-          });
-        }
-      }
-      // add user to request object
-      req.auth = { userId: user.id };
-
-      return next();
-    } catch (error) {
-      res
-        .status(403)
-        .send({ type: "authorization", code: "02", message: error.message });
-    }
-  }
-};
-
-const activation = async (req, res, next) => {
-  const { id, token } = req.params;
-  try {
-    if (!token)
-      return res.status(401).send({
-        type: "authorization",
-        code: "01",
-        message: "token is undefined",
-      });
-
-    // check if token in valid
-
-    const decoded = jwt.verify(token, envConfig.Activation.secret);
-
-    // check if the token id == user id
-
-    if (id != decoded.id)
-      return res.status(401).send({
-        type: "authorization",
-        code: "03",
-        message: "this url is invalid",
-      });
-
-    // check if user exists
-
-    const user = await Accounts.findById(id);
-    if (!user)
-      return res.status(401).send({
-        type: "authorization",
-        code: "04",
-        message: "user isn`t exists",
-      });
-
-    // check if password has not changed after creating the Token
-
-    if (user.whenPasswordChanged) {
-      const currentTimeStamp = parseInt(
-        user.whenPasswordChanged.getTime() / 1000
+  if (user.whenPasswordChanged) {
+    const currentTimeStamp = parseInt(
+      user.whenPasswordChanged.getTime() / 1000,
+    );
+    if (currentTimeStamp > decoded.iat)
+      throw new AppError(
+        "password had been changed after the Token created.login again",
+        403,
+        203,
       );
-
-      if (currentTimeStamp > decoded.iat) {
-        return res.status(403).send({
-          type: "authorization",
-          code: "05",
-          message: "password had been changed after the url sent. login again",
-        });
-      }
-    }
-    req.auth = { userId: user.id };
-    return next();
-  } catch (error) {
-    res
-      .status(401)
-      .send({ type: "authorization", code: "02", message: error.message });
   }
-};
+
+  const role = user.role;
+  if (role.fullAccess) {
+    req.auth = { adminId: user._id.toString(), title };
+    return next();
+  }
+
+  const permissions = Array.isArray(role.permissions)
+    ? role.permissions
+    : [];
+  const hasPermission = permissions.includes(req.baseUrl);
+  if (!hasPermission)
+    throw new AppError(
+      "user does not have the permission to use this url",
+      403,
+      204,
+    );
+
+  req.auth = { adminId: user._id.toString(), title };
+  next();
+});
+
+const UserAuthorization = asyncHandler(async (req, res, next) => {
+  const { authorization } = req.headers;
+
+  if (!authorization || !authorization.startsWith("Bearer"))
+    throw new AppError("Missing authorization header", 401, 210);
+
+  const token = authorization.split(" ")[1];
+  const decoded = jwt.verify(token, envConfig.JWT.secret);
+
+  const user = await Accounts.findById(decoded.id);
+  if (!user)
+    throw new AppError("user is not exists", 401, 211);
+
+  if (user.whenPasswordChanged) {
+    const currentTimeStamp = parseInt(
+      user.whenPasswordChanged.getTime() / 1000,
+    );
+    if (currentTimeStamp > decoded.iat)
+      throw new AppError(
+        "password had been changed after the Token created.login again",
+        403,
+        212,
+      );
+  }
+
+  req.auth = { userId: user.id };
+  next();
+});
+
+const activation = asyncHandler(async (req, res, next) => {
+  const { id, token } = req.params;
+
+  if (!token)
+    throw new AppError("token is undefined", 401, 220);
+
+  const decoded = jwt.verify(token, envConfig.Activation.secret);
+
+  if (id != decoded.id)
+    throw new AppError("this url is invalid", 401, 221);
+
+  const user = await Accounts.findById(id);
+  if (!user)
+    throw new AppError("user isn`t exists", 401, 222);
+
+  if (user.whenPasswordChanged) {
+    const currentTimeStamp = parseInt(
+      user.whenPasswordChanged.getTime() / 1000,
+    );
+    if (currentTimeStamp > decoded.iat)
+      throw new AppError(
+        "password had been changed after the url sent. login again",
+        403,
+        223,
+      );
+  }
+
+  req.auth = { userId: user.id };
+  next();
+});
 
 export default {
   AdminAuthorization,
