@@ -59,7 +59,7 @@ Create a `.env` file in the project root (see `.env.example`):
 ## Installation
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/yadragon2007/Miro.git
 cd miroproject
 npm install
 ```
